@@ -18,24 +18,6 @@ ENDIF()
 math(EXPR BITS "8*${CMAKE_SIZEOF_VOID_P}")
 
 ################################################################################
-# Dependencies
-################################################################################
-
-# libuiohook
-SET(UIOHOOKPATH "${PROJECT_SOURCE_DIR}/deps/libuiohook")
-if (UIOHOOKPATH STREQUAL "")
-	# UIOHOOKPATH is empty
-	message(FATAL_ERROR "'UIOHOOKPATH' is not set!")
-	return()
-endif()
-
-if (NOT EXISTS "${UIOHOOKPATH}/include/uiohook.h")
-	# UIOHOOKPATH is invalid
-	message(FATAL_ERROR "'UIOHOOKPATH' is invalid, needs to have required headers!")
-	return()
-endif()
-
-################################################################################
 # Code
 ################################################################################
 
@@ -75,7 +57,6 @@ IF(WIN32)
 	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
 
 	LIST(APPEND node-libuiohook_THIRDPARTY
-		"${PROJECT_SOURCE_DIR}/deps/libuiohook/libuiohook-0${libExtension}"
 	)
 endif()
 ################################################################################
@@ -90,13 +71,6 @@ TARGET_LINK_LIBRARIES(${PROJECT_NAME}
 )
 
 add_library(node-libuiohook_THIRDPARTY SHARED IMPORTED)
-
-set_property(TARGET node-libuiohook_THIRDPARTY PROPERTY IMPORTED_LOCATION ${UIOHOOKPATH}/libuiohook-0.dll)
-
-set_property(TARGET node-libuiohook_THIRDPARTY PROPERTY IMPORTED_IMPLIB ${UIOHOOKPATH}/libuiohook.dll.a)
-
-target_link_libraries(node-libuiohook node-libuiohook_THIRDPARTY)
-
 
 # Distributable Version
 ADD_CUSTOM_COMMAND(TARGET node-libuiohook POST_BUILD
