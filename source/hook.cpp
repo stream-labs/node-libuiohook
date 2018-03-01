@@ -111,7 +111,7 @@ struct ThreadData {
 static bool isKeyDown(key_t k) {
 #if defined(_WIN32)
 	// Windows is incredibly simple, this allows us to query a key without any hooks.
-	return !!GetAsyncKeyState(k);
+	return GetAsyncKeyState(k) >> 15;
 #elif defined(_MACOS) || defined(_MACOSX)
 
 #elif defined(_LINUX) || defined(_GNU)
