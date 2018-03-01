@@ -91,12 +91,12 @@ static uint32_t jenkings_one_at_a_time(const uint8_t* key, size_t sz) {
 }
 
 struct HotKey {
-	std::vector<key_t> keys;
+	std::vector<std::pair<key_t, bool>> keys;
 	std::unique_ptr<Nan::Callback> cbDown, cbUp;
 	bool wasDown = false;
 
-	static uint32_t Stringify(std::vector<key_t> keys) {
-		return jenkings_one_at_a_time(reinterpret_cast<uint8_t*>(keys.data()), keys.size() * sizeof(key_t));
+	static uint32_t Stringify(std::vector<std::pair<key_t, bool>> keys) {
+		return jenkings_one_at_a_time(reinterpret_cast<uint8_t*>(keys.data()), keys.size() * (sizeof(key_t) + sizeof(bool)));
 	};
 };
 
@@ -111,7 +111,7 @@ struct ThreadData {
 static bool isKeyDown(key_t k) {
 #if defined(_WIN32)
 	// Windows is incredibly simple, this allows us to query a key without any hooks.
-	return !!GetAsyncKeyState(k);
+	return (bool)(GetAsyncKeyState(k) >> 15);
 #elif defined(_MACOS) || defined(_MACOSX)
 
 #elif defined(_LINUX) || defined(_GNU)
@@ -133,8 +133,13 @@ static int32_t HotKeyThread(void* arg) {
 			std::unique_lock<std::mutex> ulock(td->mtx);
 			for (auto& hk : td->hotkeys) {
 				bool allPressed = true;
-				for (key_t k : hk.second.keys) {
-					if (!isKeyDown(k))
+
+				for (std::pair<key_t, bool> k : hk.second.keys) {
+					bool isBound = k.second;
+					bool isPressed = isKeyDown(k.first);
+					
+					if ((isBound && !isPressed) ||
+						(!isBound && isPressed))
 						allPressed = false;
 				}
 
@@ -212,7 +217,7 @@ void StopHotkeyThreadJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	return;
 }
 
-std::vector<key_t> StringToKeys(std::string keystr, v8::Local<v8::Object> modifiers) {
+std::vector<std::pair<key_t, bool>> StringToKeys(std::string keystr, v8::Local<v8::Object> modifiers) {
 	static std::map<std::string, key_t> g_KeyMap = {
 	#ifdef _WIN32
 		// Mouse
@@ -376,17 +381,14 @@ std::vector<key_t> StringToKeys(std::string keystr, v8::Local<v8::Object> modifi
 
 	key_t key = g_KeyMap.at(keystr);
 
-	std::vector<key_t> keys;
-	if (modShift)
-		keys.push_back(g_KeyMap.at("Shift"));
-	if (modCtrl)
-		keys.push_back(g_KeyMap.at("Control"));
-	if (modMenu)
-		keys.push_back(g_KeyMap.at("Menu"));
-	if (modMeta)
-		keys.push_back(g_KeyMap.at("LWin"));
+	std::vector<std::pair<key_t, bool>> keys;
 
-	keys.push_back(key);
+	keys.push_back(std::make_pair(g_KeyMap.at("Shift"), modShift));
+	keys.push_back(std::make_pair(g_KeyMap.at("Control"), modCtrl));
+	keys.push_back(std::make_pair(g_KeyMap.at("Menu"), modMenu));
+	keys.push_back(std::make_pair(g_KeyMap.at("OSLeft"), modMeta));
+
+	keys.push_back(std::make_pair(key, true));
 
 	return std::move(keys);
 }
@@ -406,7 +408,7 @@ void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	 */
 
 	v8::Local<v8::Object> binds = args[0]->ToObject();
-	std::vector<key_t> keys = StringToKeys(
+	std::vector<std::pair<key_t, bool>> keys = StringToKeys(
 		std::string(*v8::String::Utf8Value(binds->Get(v8::String::NewFromUtf8(args.GetIsolate(), "key")))),
 		binds->Get(v8::String::NewFromUtf8(args.GetIsolate(), "modifiers"))->ToObject()
 	);
@@ -464,7 +466,7 @@ void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 void UnregisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	v8::Local<v8::Object> binds = args[0]->ToObject();
-	std::vector<key_t> keys = StringToKeys(
+	std::vector<std::pair<key_t, bool>> keys = StringToKeys(
 		std::string(*v8::String::Utf8Value(binds->Get(v8::String::NewFromUtf8(args.GetIsolate(), "key")))),
 		binds->Get(v8::String::NewFromUtf8(args.GetIsolate(), "modifiers"))->ToObject()
 	);
