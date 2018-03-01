@@ -96,7 +96,7 @@ struct HotKey {
 	bool wasDown = false;
 
 	static uint32_t Stringify(std::vector<std::pair<key_t, bool>> keys) {
-		return jenkings_one_at_a_time(reinterpret_cast<uint8_t*>(keys.data()), keys.size() * sizeof(key_t));
+		return jenkings_one_at_a_time(reinterpret_cast<uint8_t*>(keys.data()), keys.size() * (sizeof(key_t) + sizeof(bool)));
 	};
 };
 
@@ -111,7 +111,7 @@ struct ThreadData {
 static bool isKeyDown(key_t k) {
 #if defined(_WIN32)
 	// Windows is incredibly simple, this allows us to query a key without any hooks.
-	return GetAsyncKeyState(k) >> 15;
+	return (bool)(GetAsyncKeyState(k) >> 15);
 #elif defined(_MACOS) || defined(_MACOSX)
 
 #elif defined(_LINUX) || defined(_GNU)
