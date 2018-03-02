@@ -77,7 +77,7 @@ class Worker : public ForeignWorker {
 
 typedef int16_t key_t;
 
-static uint32_t jenkings_one_at_a_time(std::pair<uint8_t, bool>* key, size_t sz) {
+static uint32_t jenkings_one_at_a_time(const std::pair<uint8_t, bool>* key, size_t sz) {
 	size_t p = 0; uint32_t hash = 0;
 	while (p < sz) {
 		hash += key[p++].first;
