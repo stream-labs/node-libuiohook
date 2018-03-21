@@ -379,16 +379,22 @@ std::vector<std::pair<key_t, bool>> StringToKeys(std::string keystr, v8::Local<v
 	modMenu = modifiers->Get(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "alt"))->ToBoolean()->BooleanValue();
 	modMeta = modifiers->Get(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "meta"))->ToBoolean()->BooleanValue();
 
-	key_t key = g_KeyMap.at(keystr);
+
+	std::map<std::string, key_t>::iterator it = g_KeyMap.find(keystr);
+
 
 	std::vector<std::pair<key_t, bool>> keys;
 
-	keys.push_back(std::make_pair(g_KeyMap.at("Shift"), modShift));
-	keys.push_back(std::make_pair(g_KeyMap.at("Control"), modCtrl));
-	keys.push_back(std::make_pair(g_KeyMap.at("Menu"), modMenu));
-	keys.push_back(std::make_pair(g_KeyMap.at("OSLeft"), modMeta));
+	if (it != g_KeyMap.end()) {
+		key_t key = g_KeyMap.at(keystr);
 
-	keys.push_back(std::make_pair(key, true));
+		keys.push_back(std::make_pair(g_KeyMap.at("Shift"), modShift));
+		keys.push_back(std::make_pair(g_KeyMap.at("Control"), modCtrl));
+		keys.push_back(std::make_pair(g_KeyMap.at("Menu"), modMenu));
+		keys.push_back(std::make_pair(g_KeyMap.at("OSLeft"), modMeta));
+
+		keys.push_back(std::make_pair(key, true));
+	}
 
 	return std::move(keys);
 }
@@ -414,6 +420,9 @@ void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	);
 	std::string eventString = std::string(*v8::String::Utf8Value(binds->Get(v8::String::NewFromUtf8(args.GetIsolate(),
 		"eventType"))));
+
+	if (keys.size() == 0)
+		return;
 
 	uint32_t key = HotKey::Stringify(keys);
 	if (gThreadData.hotkeys.count(key)) {
@@ -472,6 +481,9 @@ void UnregisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	);
 	std::string eventString = std::string(*v8::String::Utf8Value(binds->Get(v8::String::NewFromUtf8(args.GetIsolate(),
 		"eventType"))));
+
+	if (keys.size() == 0)
+		return;
 
 	uint32_t key = HotKey::Stringify(keys);
 	if (!gThreadData.hotkeys.count(key)) {
