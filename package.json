@@ -2,23 +2,18 @@
   "name": "node-libuiohook",
   "version": "0.0.1",
   "description": "",
-  "private": true,
-  "authors": [],
+  "files": [
+    "main.js",
+    "node_libuiohook.node",
+    "node_libuiohook.pdb"
+  ],
   "repository": {
     "type": "git",
-    "url": "git@github.com:twitchalerts/node-libuiohook.git"
+    "url": "git@github.com:stream-labs/node-libuiohook.git"
   },
-  "licenses": [],
-  "main": "index.js",
-  "scripts": {
-    "configure": "cmake-js configure",
-    "install": "cmake-js compile"
-  },
+  "license": "GPL-3.0-or-later",
+  "main": "main.js",
   "devDependencies": {
-    "nodeunit": "^0.10.2",
-    "nan": "^2.6.2"
-  },
-  "dependencies": {
-    "cmake-js": "^3.4.1"
+    "nan": "2.10.0"
   }
 }

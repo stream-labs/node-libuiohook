@@ -1,85 +1,47 @@
-cmake_minimum_required(VERSION 3.5)
-project(node-libuiohook)
+cmake_minimum_required(VERSION 3.0)
+project(node_libuiohook)
 
-################################################################################
-# System & Utilities
-################################################################################
-# Detect Libary Suffix
-IF(WIN32)
-	SET(libExtension ".dll")
-	add_definitions(-DWINVER=0x502 -D_WIN32_WINNT=0x502)
-ELSEIF(APPLE)
-	SET(libExtension ".dylib")
-ELSE()
-    SET(libExtension ".so")
-ENDIF()
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
-# Detect Architecture (Bitness)
-math(EXPR BITS "8*${CMAKE_SIZEOF_VOID_P}")
+include(NodeJS)
 
-################################################################################
-# Code
-################################################################################
+nodejs_init()
 
-# Includes
-include_directories(
-	${CMAKE_JS_INC}
-	${UIOHOOKPATH}/include/
-	${PROJECT_SOURCE_DIR}/node_modules/nan/
-)
+set(node_libuiohook_HEADERS ${PROJECT_SOURCE_DIR}/source/hook.h)
 
-# Source
-SET(PROJECT_HEADERS
-	"${PROJECT_SOURCE_DIR}/source/hook.h"
-)
-SET(PROJECT_SOURCE
-	"${PROJECT_SOURCE_DIR}/source/hook.cpp"
-	"${PROJECT_SOURCE_DIR}/source/module.cpp"
-)
+set(node_libuiohook_SOURCE
+	${PROJECT_SOURCE_DIR}/source/hook.cpp
+	${PROJECT_SOURCE_DIR}/source/module.cpp)
 
-ADD_LIBRARY(${PROJECT_NAME} SHARED ${PROJECT_SOURCE} ${PROJECT_HEADERS})
+add_nodejs_module(node_libuiohook
+	${node_libuiohook_SOURCE}
+	${node_libuiohook_HEADERS}
+	${NODEJS_SOURCES})
 
-# Libraries
-SET(node-libuiohook_LIBRARIES
-)
+set(node_libuiohook_EXTRAS
+	"${node_libuiohook_SOURCE_DIR}/main.js"
+	"${node_libuiohook_SOURCE_DIR}/package.json")
 
-# Binary Dependencies
-SET(node-libuiohook_THIRDPARTY
-	"${PROJECT_SOURCE_DIR}/index.js"
-	"${PROJECT_SOURCE_DIR}/package.json"
-)
-
-################################################################################
-# Platform Dependencies
-################################################################################
-IF(WIN32)
-	# Windows
-	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-
-	LIST(APPEND node-libuiohook_THIRDPARTY
-	)
+if(WIN32)
+	target_compile_definitions(node_libuiohook
+		PRIVATE -D_CRT_SECURE_NO_WARNINGS)
 endif()
-################################################################################
-# Building
-################################################################################
-SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
 
-TARGET_LINK_LIBRARIES(${PROJECT_NAME}
+target_link_libraries(node_libuiohook
 	${LIBUIOHOOK_LIBRARIES}
-	${node-libuiohook_LIBRARIES}
-	${CMAKE_JS_LIB}
-)
+	${NODEJS_LIBRARIES})
 
-add_library(node-libuiohook_THIRDPARTY SHARED IMPORTED)
+target_include_directories(node_libuiohook
+	PUBLIC ${NODEJS_INCLUDE_DIRS} ${UIOHOOKPATH}/include/)
 
-# Distributable Version
-ADD_CUSTOM_COMMAND(TARGET node-libuiohook POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy
-	"$<TARGET_FILE:node-libuiohook>"
-	"${node-libuiohook_BINARY_DIR}/distribute/node-libuiohook/$<TARGET_FILE_NAME:node-libuiohook>"
-)
-ADD_CUSTOM_COMMAND(TARGET node-libuiohook POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy
-	${node-libuiohook_THIRDPARTY}
-	"${node-libuiohook_BINARY_DIR}/distribute/node-libuiohook"
-)
+install(
+	FILES $<TARGET_PDB_FILE:node_libuiohook>
+	DESTINATION ${CMAKE_INSTALL_PREFIX} OPTIONAL)
+
+install(
+	FILES $<TARGET_FILE:node_libuiohook>
+	DESTINATION ${CMAKE_INSTALL_PREFIX})
+
+install(
+	FILES ${node_libuiohook_EXTRAS}
+	DESTINATION ${CMAKE_INSTALL_PREFIX})
