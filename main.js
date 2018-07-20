@@ -1,2 +1,2 @@
-module.exports = require('./node-libuiohook.node');
+module.exports = require('./node_libuiohook.node');
 
