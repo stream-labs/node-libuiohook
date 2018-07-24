@@ -4,6 +4,7 @@ project(node_libuiohook)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 include(NodeJS)
+include(CPack)
 
 nodejs_init()
 
@@ -36,12 +37,12 @@ target_include_directories(node_libuiohook
 
 install(
 	FILES $<TARGET_PDB_FILE:node_libuiohook>
-	DESTINATION ${CMAKE_INSTALL_PREFIX} OPTIONAL)
+	DESTINATION . OPTIONAL)
 
 install(
 	FILES $<TARGET_FILE:node_libuiohook>
-	DESTINATION ${CMAKE_INSTALL_PREFIX})
+	DESTINATION .)
 
 install(
 	FILES ${node_libuiohook_EXTRAS}
-	DESTINATION ${CMAKE_INSTALL_PREFIX})
+	DESTINATION .)
