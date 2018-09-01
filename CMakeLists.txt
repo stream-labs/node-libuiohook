@@ -25,7 +25,10 @@ set(node_libuiohook_EXTRAS
 
 if(WIN32)
 	target_compile_definitions(node_libuiohook
-		PRIVATE -D_CRT_SECURE_NO_WARNINGS)
+		PRIVATE
+		-D_CRT_SECURE_NO_WARNINGS
+		-DUNICODE
+		-D_UNICODE)
 endif()
 
 target_link_libraries(node_libuiohook
