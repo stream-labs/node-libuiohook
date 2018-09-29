@@ -7,6 +7,9 @@
 #include <thread>
 #include <vector>
 #include <inttypes.h>
+#if defined(_MACOS) || defined(_MACOSX)
+#include <Carbon/Carbon.h>
+#endif
 
 class ForeignWorker {
 	private:
@@ -75,7 +78,7 @@ class Worker : public ForeignWorker {
 	}
 };
 
-typedef int16_t key_t;
+typedef int16_t keycode_t;
 
 static uint32_t jenkings_one_at_a_time(const std::pair<uint8_t, bool>* key, size_t sz) {
 	size_t p = 0; uint32_t hash = 0;
@@ -91,12 +94,12 @@ static uint32_t jenkings_one_at_a_time(const std::pair<uint8_t, bool>* key, size
 }
 
 struct HotKey {
-	std::vector<std::pair<key_t, bool>> keys;
+	std::vector<std::pair<keycode_t, bool>> keys;
 	std::unique_ptr<Nan::Callback> cbDown, cbUp;
 	bool wasDown = false;
 
-	static uint32_t Stringify(std::vector<std::pair<key_t, bool>> keys) {
-		return jenkings_one_at_a_time(reinterpret_cast<std::pair<uint8_t, bool>*>(keys.data()), keys.size() * (sizeof(key_t) + sizeof(bool)));
+	static uint32_t Stringify(std::vector<std::pair<keycode_t, bool>> keys) {
+		return jenkings_one_at_a_time(reinterpret_cast<std::pair<uint8_t, bool>*>(keys.data()), keys.size() * (sizeof(keycode_t) + sizeof(bool)));
 	};
 };
 
@@ -108,12 +111,12 @@ struct ThreadData {
 	bool shutdown = false;
 } gThreadData;
 
-static bool isKeyDown(key_t k) {
+static bool isKeyDown(keycode_t k) {
 #if defined(_WIN32)
 	// Windows is incredibly simple, this allows us to query a key without any hooks.
 	return (bool)(GetAsyncKeyState(k) >> 15);
 #elif defined(_MACOS) || defined(_MACOSX)
-
+	return false;
 #elif defined(_LINUX) || defined(_GNU)
 
 #endif
@@ -134,7 +137,7 @@ static int32_t HotKeyThread(void* arg) {
 			for (auto& hk : td->hotkeys) {
 				bool allPressed = true;
 
-				for (std::pair<key_t, bool> k : hk.second.keys) {
+				for (std::pair<keycode_t, bool> k : hk.second.keys) {
 					bool isBound = k.second;
 					bool isPressed = isKeyDown(k.first);
 					
@@ -217,8 +220,8 @@ void StopHotkeyThreadJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	return;
 }
 
-std::vector<std::pair<key_t, bool>> StringToKeys(std::string keystr, v8::Local<v8::Object> modifiers) {
-	static std::map<std::string, key_t> g_KeyMap = {
+std::vector<std::pair<keycode_t, bool>> StringToKeys(std::string keystr, v8::Local<v8::Object> modifiers) {
+	static std::map<std::string, keycode_t> g_KeyMap = {
 	#ifdef _WIN32
 		// Mouse
 		std::make_pair("LeftMouseButton", VK_LBUTTON), std::make_pair("RightMouseButton", VK_RBUTTON),
@@ -301,75 +304,75 @@ std::vector<std::pair<key_t, bool>> StringToKeys(std::string keystr, v8::Local<v
 		std::make_pair("ArrowUp", VK_UP), std::make_pair("ArrowLeft", VK_LEFT),
 		std::make_pair("ArrowRight", VK_RIGHT), std::make_pair("ArrowDown", VK_DOWN),
 
-	#else
-		std::make_pair("Escape", VC_ESCAPE),
-		std::make_pair("F1", VC_F1),
-		std::make_pair("F2", VC_F2),
-		std::make_pair("F3", VC_F3),
-		std::make_pair("F4", VC_F4),
-		std::make_pair("F5", VC_F5),
-		std::make_pair("F6", VC_F6),
-		std::make_pair("F7", VC_F7),
-		std::make_pair("F8", VC_F8),
-		std::make_pair("F9", VC_F9),
-		std::make_pair("F10", VC_F10),
-		std::make_pair("F11", VC_F11),
-		std::make_pair("F12", VC_F12),
-		std::make_pair("F13", VC_F13),
-		std::make_pair("F14", VC_F14),
-		std::make_pair("F15", VC_F15),
-		std::make_pair("F16", VC_F16),
-		std::make_pair("F17", VC_F17),
-		std::make_pair("F18", VC_F18),
-		std::make_pair("F19", VC_F19),
-		std::make_pair("F20", VC_F20),
-		std::make_pair("F21", VC_F21),
-		std::make_pair("F22", VC_F22),
-		std::make_pair("F23", VC_F23),
-		std::make_pair("F24", VC_F24),
-		std::make_pair("1", VC_1),
-		std::make_pair("2", VC_2),
-		std::make_pair("3", VC_3),
-		std::make_pair("4", VC_4),
-		std::make_pair("5", VC_5),
-		std::make_pair("6", VC_6),
-		std::make_pair("7", VC_7),
-		std::make_pair("8", VC_8),
-		std::make_pair("9", VC_9),
-		std::make_pair("0", VC_0),
-		std::make_pair("Backspace", VC_BACKSPACE),
-		std::make_pair("Tab", VC_TAB),
-		std::make_pair("A", VC_A),
-		std::make_pair("B", VC_B),
-		std::make_pair("C", VC_C),
-		std::make_pair("D", VC_D),
-		std::make_pair("E", VC_E),
-		std::make_pair("F", VC_F),
-		std::make_pair("G", VC_G),
-		std::make_pair("H", VC_H),
-		std::make_pair("I", VC_I),
-		std::make_pair("J", VC_J),
-		std::make_pair("K", VC_K),
-		std::make_pair("L", VC_L),
-		std::make_pair("M", VC_M),
-		std::make_pair("N", VC_N),
-		std::make_pair("O", VC_O),
-		std::make_pair("P", VC_P),
-		std::make_pair("Q", VC_Q),
-		std::make_pair("R", VC_R),
-		std::make_pair("S", VC_S),
-		std::make_pair("T", VC_T),
-		std::make_pair("U", VC_U),
-		std::make_pair("V", VC_V),
-		std::make_pair("W", VC_W),
-		std::make_pair("X", VC_X),
-		std::make_pair("Y", VC_Y),
-		std::make_pair("Z", VC_Z),
-		std::make_pair("Control", 29),
-		std::make_pair("CommandOrControl", 29),
-		std::make_pair("Command", 29),
-		std::make_pair("Alt", 56),
-		std::make_pair("Shift", 42),
+	#elif defined(_MACOS) || defined(_MACOSX)
+		std::make_pair("Escape", kVK_Escape),
+		std::make_pair("F1", kVK_F1),
+		std::make_pair("F2", kVK_F2),
+		std::make_pair("F3", kVK_F3),
+		std::make_pair("F4", kVK_F4),
+		std::make_pair("F5", kVK_F5),
+		std::make_pair("F6", kVK_F6),
+		std::make_pair("F7", kVK_F7),
+		std::make_pair("F8", kVK_F8),
+		std::make_pair("F9", kVK_F9),
+		std::make_pair("F10", kVK_F10),
+		std::make_pair("F11", kVK_F11),
+		std::make_pair("F12", kVK_F12),
+		std::make_pair("F13", kVK_F13),
+		std::make_pair("F14", kVK_F14),
+		std::make_pair("F15", kVK_F15),
+		std::make_pair("F16", kVK_F16),
+		std::make_pair("F17", kVK_F17),
+		std::make_pair("F18", kVK_F18),
+		std::make_pair("F19", kVK_F19),
+		std::make_pair("F20", kVK_F20),
+		std::make_pair("F21", kVK_F21),
+		std::make_pair("F22", kVK_F22),
+		std::make_pair("F23", kVK_F23),
+		std::make_pair("F24", kVK_F24),
+		std::make_pair("1", kVK_ANSI_1),
+		std::make_pair("2", kVK_ANSI_2),
+		std::make_pair("3", kVK_ANSI_3),
+		std::make_pair("4", kVK_ANSI_4),
+		std::make_pair("5", kVK_ANSI_5),
+		std::make_pair("6", kVK_ANSI_6),
+		std::make_pair("7", kVK_ANSI_7),
+		std::make_pair("8", kVK_ANSI_8),
+		std::make_pair("9", kVK_ANSI_9),
+		std::make_pair("0", kVK_ANSI_0),
+		std::make_pair("Backspace", kVK_Backspace),
+		std::make_pair("Tab", kVK_Tab),
+		std::make_pair("A", kVK_ANSI_A),
+		std::make_pair("B", kVK_ANSI_B),
+		std::make_pair("C", kVK_ANSI_C),
+		std::make_pair("D", kVK_ANSI_D),
+		std::make_pair("E", kVK_ANSI_E),
+		std::make_pair("F", kVK_ANSI_F),
+		std::make_pair("G", kVK_ANSI_G),
+		std::make_pair("H", kVK_ANSI_H),
+		std::make_pair("I", kVK_ANSI_I),
+		std::make_pair("J", kVK_ANSI_J),
+		std::make_pair("K", kVK_ANSI_K),
+		std::make_pair("L", kVK_ANSI_L),
+		std::make_pair("M", kVK_ANSI_M),
+		std::make_pair("N", kVK_ANSI_N),
+		std::make_pair("O", kVK_ANSI_O),
+		std::make_pair("P", kVK_ANSI_P),
+		std::make_pair("Q", kVK_ANSI_Q),
+		std::make_pair("R", kVK_ANSI_R),
+		std::make_pair("S", kVK_ANSI_S),
+		std::make_pair("T", kVK_ANSI_T),
+		std::make_pair("U", kVK_ANSI_U),
+		std::make_pair("V", kVK_ANSI_V),
+		std::make_pair("W", kVK_ANSI_W),
+		std::make_pair("X", kVK_ANSI_X),
+		std::make_pair("Y", kVK_ANSI_Y),
+		std::make_pair("Z", kVK_ANSI_Z),
+		std::make_pair("Control", kVK_Control),
+		std::make_pair("CommandOrControl", kVK_Command),
+		std::make_pair("Command", kVK_Command),
+		std::make_pair("Alt", kVK_Option),
+		std::make_pair("Shift", kVK_Shift),
 	#endif
 	};
 
@@ -380,13 +383,13 @@ std::vector<std::pair<key_t, bool>> StringToKeys(std::string keystr, v8::Local<v
 	modMeta = modifiers->Get(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "meta"))->ToBoolean()->BooleanValue();
 
 
-	std::map<std::string, key_t>::iterator it = g_KeyMap.find(keystr);
+	std::map<std::string, keycode_t>::iterator it = g_KeyMap.find(keystr);
 
 
-	std::vector<std::pair<key_t, bool>> keys;
+	std::vector<std::pair<keycode_t, bool>> keys;
 
 	if (it != g_KeyMap.end()) {
-		key_t key = g_KeyMap.at(keystr);
+		keycode_t key = g_KeyMap.at(keystr);
 
 		keys.push_back(std::make_pair(g_KeyMap.at("Shift"), modShift));
 		keys.push_back(std::make_pair(g_KeyMap.at("Control"), modCtrl));
@@ -414,7 +417,7 @@ void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	 */
 
 	v8::Local<v8::Object> binds = args[0]->ToObject();
-	std::vector<std::pair<key_t, bool>> keys = StringToKeys(
+	std::vector<std::pair<keycode_t, bool>> keys = StringToKeys(
 		std::string(*v8::String::Utf8Value(binds->Get(v8::String::NewFromUtf8(args.GetIsolate(), "key")))),
 		binds->Get(v8::String::NewFromUtf8(args.GetIsolate(), "modifiers"))->ToObject()
 	);
@@ -475,7 +478,7 @@ void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 void UnregisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	v8::Local<v8::Object> binds = args[0]->ToObject();
-	std::vector<std::pair<key_t, bool>> keys = StringToKeys(
+	std::vector<std::pair<keycode_t, bool>> keys = StringToKeys(
 		std::string(*v8::String::Utf8Value(binds->Get(v8::String::NewFromUtf8(args.GetIsolate(), "key")))),
 		binds->Get(v8::String::NewFromUtf8(args.GetIsolate(), "modifiers"))->ToObject()
 	);

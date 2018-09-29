@@ -21,6 +21,8 @@ math(EXPR BITS "8*${CMAKE_SIZEOF_VOID_P}")
 # Code
 ################################################################################
 
+SET(CMAKE_CXX_STANDARD 17)
+
 # Includes
 include_directories(
 	${CMAKE_JS_INC}
@@ -58,6 +60,9 @@ IF(WIN32)
 
 	LIST(APPEND node-libuiohook_THIRDPARTY
 	)
+ELSEIF(APPLE)
+    find_library(CARBON Carbon)
+    list(APPEND node-libuihook_LIBRARIES ${CARBON})
 endif()
 ################################################################################
 # Building
