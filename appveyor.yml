@@ -15,7 +15,7 @@ environment:
   BuildDirectory: build
   Generator: Visual Studio 15 2017 Win64
   DistributeDirectory: distribute
-  FullDistributePath: $(SLBuildDirectory)\$(SLDistributeDirectory)
+  FullDistributePath: $(BuildDirectory)\$(DistributeDirectory)
   DistributionAritfact: $(RuntimeName)-$(RuntimeVersion)-node-libuiohook
 
 install:
