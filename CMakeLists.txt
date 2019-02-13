@@ -1,85 +1,85 @@
-cmake_minimum_required(VERSION 3.5)
-project(node-libuiohook)
+cmake_minimum_required(VERSION 3.0)
+project(node_libuiohook)
 
-################################################################################
-# System & Utilities
-################################################################################
-# Detect Libary Suffix
-IF(WIN32)
-	SET(libExtension ".dll")
-	add_definitions(-DWINVER=0x502 -D_WIN32_WINNT=0x502)
-ELSEIF(APPLE)
-	SET(libExtension ".dylib")
-ELSE()
-    SET(libExtension ".so")
-ENDIF()
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
-# Detect Architecture (Bitness)
-math(EXPR BITS "8*${CMAKE_SIZEOF_VOID_P}")
+#############################
+# CMake Settings
+#############################
 
-################################################################################
-# Code
-################################################################################
+SET(NODEJS_URL "https://atom.io/download/atom-shell" CACHE STRING "Node.JS URL")
+SET(NODEJS_NAME "iojs" CACHE STRING "Node.JS Name")
+SET(NODEJS_VERSION "v2.0.4" CACHE STRING "Node.JS Version")
 
-# Includes
-include_directories(
-	${CMAKE_JS_INC}
-	${UIOHOOKPATH}/include/
-	${PROJECT_SOURCE_DIR}/node_modules/nan/
-)
+include(NodeJS)
+include(CPack)
 
-# Source
-SET(PROJECT_HEADERS
-	"${PROJECT_SOURCE_DIR}/source/hook.h"
-)
-SET(PROJECT_SOURCE
-	"${PROJECT_SOURCE_DIR}/source/hook.cpp"
+nodejs_init()
+
+#############################
+# Source, Libraries & Directories
+#############################
+SET(PROJECT_SOURCE 
+	"${PROJECT_SOURCE_DIR}/source/hook.cpp" "${PROJECT_SOURCE_DIR}/source/hook.h"
 	"${PROJECT_SOURCE_DIR}/source/module.cpp"
 )
 
-ADD_LIBRARY(${PROJECT_NAME} SHARED ${PROJECT_SOURCE} ${PROJECT_HEADERS})
-
-# Libraries
-SET(node-libuiohook_LIBRARIES
+SET(PROJECT_LIBRARIES
+	${NODEJS_LIBRARIES}
 )
 
-# Binary Dependencies
-SET(node-libuiohook_THIRDPARTY
-	"${PROJECT_SOURCE_DIR}/index.js"
-	"${PROJECT_SOURCE_DIR}/package.json"
+SET(PROJECT_INCLUDE_PATHS
+	${NODEJS_INCLUDE_DIRS}
+	"${CMAKE_SOURCE_DIR}/source/"
 )
 
-################################################################################
-# Platform Dependencies
-################################################################################
-IF(WIN32)
-	# Windows
-	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-
-	LIST(APPEND node-libuiohook_THIRDPARTY
-	)
-endif()
-################################################################################
+#############################
 # Building
-################################################################################
-SET_TARGET_PROPERTIES(${PROJECT_NAME} PROPERTIES PREFIX "" SUFFIX ".node")
-
-TARGET_LINK_LIBRARIES(${PROJECT_NAME}
-	${LIBUIOHOOK_LIBRARIES}
-	${node-libuiohook_LIBRARIES}
-	${CMAKE_JS_LIB}
+#############################
+ADD_LIBRARY(
+	${PROJECT_NAME}
+	MODULE
+	${PROJECT_SOURCE}
 )
 
-add_library(node-libuiohook_THIRDPARTY SHARED IMPORTED)
-
-# Distributable Version
-ADD_CUSTOM_COMMAND(TARGET node-libuiohook POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy
-	"$<TARGET_FILE:node-libuiohook>"
-	"${node-libuiohook_BINARY_DIR}/distribute/node-libuiohook/$<TARGET_FILE_NAME:node-libuiohook>"
+TARGET_LINK_LIBRARIES(
+	${PROJECT_NAME}
+	${PROJECT_LIBRARIES}
 )
-ADD_CUSTOM_COMMAND(TARGET node-libuiohook POST_BUILD
-	COMMAND ${CMAKE_COMMAND} -E copy
-	${node-libuiohook_THIRDPARTY}
-	"${node-libuiohook_BINARY_DIR}/distribute/node-libuiohook"
+
+TARGET_INCLUDE_DIRECTORIES(
+	${PROJECT_NAME}
+	PUBLIC ${PROJECT_INCLUDE_PATHS}
+)
+
+SET_TARGET_PROPERTIES(
+	${PROJECT_NAME}
+	PROPERTIES
+	PREFIX ""
+	SUFFIX ".node"
+)
+
+target_compile_definitions(
+	${PROJECT_NAME}
+	PRIVATE BUILDING_NODE_EXTENSION
+)
+
+#############################
+# Distribute
+#############################
+INSTALL(TARGETS ${PROJECT_NAME}
+	RUNTIME DESTINATION "./" COMPONENT Runtime
+	LIBRARY DESTINATION "./" COMPONENT Runtime
+)
+INSTALL(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> DESTINATION ./ OPTIONAL)
+
+
+# JavaScript
+INSTALL(
+	FILES "${CMAKE_SOURCE_DIR}/package.json"
+	DESTINATION "./"
+)
+INSTALL(
+	FILES "${CMAKE_SOURCE_DIR}/main.js"
+	DESTINATION "./"
 )
