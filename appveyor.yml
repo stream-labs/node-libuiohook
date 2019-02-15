@@ -13,7 +13,7 @@ environment:
 
     - RuntimeURL: https://atom.io/download/atom-shell
       RuntimeName: iojs
-      RuntimeVersion: v4.0.0-beta.8
+      RuntimeVersion: v5.0.0-beta.2
 
   NodeVersion: 9
   BuildDirectory: build
