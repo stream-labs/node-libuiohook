@@ -3,25 +3,45 @@ project(node_libuiohook)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
+#############################
+# CMake Settings
+#############################
+
 include(NodeJS)
 include(CPack)
 
 nodejs_init()
 
-set(node_libuiohook_HEADERS ${PROJECT_SOURCE_DIR}/source/hook.h)
+#############################
+# Source, Libraries & Directories
+#############################
+SET(PROJECT_SOURCE 
+	"${PROJECT_SOURCE_DIR}/source/hook.cpp" "${PROJECT_SOURCE_DIR}/source/hook.h"
+	"${PROJECT_SOURCE_DIR}/source/module.cpp"
+)
 
-set(node_libuiohook_SOURCE
-	${PROJECT_SOURCE_DIR}/source/hook.cpp
-	${PROJECT_SOURCE_DIR}/source/module.cpp)
+SET(PROJECT_LIBRARIES
+	${NODEJS_LIBRARIES}
+)
 
-add_nodejs_module(node_libuiohook
-	${node_libuiohook_SOURCE}
-	${node_libuiohook_HEADERS}
-	${NODEJS_SOURCES})
+SET(PROJECT_INCLUDE_PATHS
+	${NODEJS_INCLUDE_DIRS}
+	"${CMAKE_SOURCE_DIR}/source/"
+)
 
-set(node_libuiohook_EXTRAS
-	"${node_libuiohook_SOURCE_DIR}/main.js"
-	"${node_libuiohook_SOURCE_DIR}/package.json")
+#############################
+# Building
+#############################
+ADD_LIBRARY(
+	${PROJECT_NAME}
+	MODULE
+	${PROJECT_SOURCE}
+)
+
+TARGET_LINK_LIBRARIES(
+	${PROJECT_NAME}
+	${PROJECT_LIBRARIES}
+)
 
 if(WIN32)
 	target_compile_definitions(node_libuiohook
@@ -31,21 +51,39 @@ if(WIN32)
 		-D_UNICODE)
 endif()
 
-target_link_libraries(node_libuiohook
-	${LIBUIOHOOK_LIBRARIES}
-	${NODEJS_LIBRARIES})
+TARGET_INCLUDE_DIRECTORIES(
+	${PROJECT_NAME}
+	PUBLIC ${PROJECT_INCLUDE_PATHS}
+)
 
-target_include_directories(node_libuiohook
-	PUBLIC ${NODEJS_INCLUDE_DIRS} ${UIOHOOKPATH}/include/)
+SET_TARGET_PROPERTIES(
+	${PROJECT_NAME}
+	PROPERTIES
+	PREFIX ""
+	SUFFIX ".node"
+)
 
-install(
-	FILES $<TARGET_PDB_FILE:node_libuiohook>
-	DESTINATION . OPTIONAL)
+target_compile_definitions(
+	${PROJECT_NAME}
+	PRIVATE BUILDING_NODE_EXTENSION
+)
 
-install(
-	FILES $<TARGET_FILE:node_libuiohook>
-	DESTINATION .)
+#############################
+# Distribute
+#############################
+INSTALL(TARGETS ${PROJECT_NAME}
+	RUNTIME DESTINATION "./" COMPONENT Runtime
+	LIBRARY DESTINATION "./" COMPONENT Runtime
+)
+INSTALL(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> DESTINATION ./ OPTIONAL)
 
-install(
-	FILES ${node_libuiohook_EXTRAS}
-	DESTINATION .)
+
+# JavaScript
+INSTALL(
+	FILES "${CMAKE_SOURCE_DIR}/package.json"
+	DESTINATION "./"
+)
+INSTALL(
+	FILES "${CMAKE_SOURCE_DIR}/main.js"
+	DESTINATION "./"
+)
