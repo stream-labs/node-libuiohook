@@ -13,9 +13,9 @@ environment:
 
     - RuntimeURL: https://atom.io/download/atom-shell
       RuntimeName: iojs
-      RuntimeVersion: v5.0.0-beta.2
+      RuntimeVersion: v5.0.0-beta.3
 
-  NodeVersion: 9
+  NodeVersion: 10
   BuildDirectory: build
   Generator: Visual Studio 15 2017 Win64
   DistributeDirectory: distribute
