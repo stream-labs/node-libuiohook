@@ -119,25 +119,20 @@ static bool isKeyDown(key_t k) {
 #endif
 }
 
-static int32_t HotKeyThread(void* arg) {
-	ThreadData* td = static_cast<ThreadData*>(arg);
+HHOOK hKeyboardHook;
 
-	// Temporarily prevent execution until main is ready.
-	{
-		std::unique_lock<std::mutex> ulock(td->mtx);
-	}
-
-	while (!td->shutdown) {
-		// Test each hotkey
+LRESULT CALLBACK keyboardProc(int nCode, WPARAM wParam, LPARAM lParam)
+{
+	if (wParam == WM_KEYDOWN || wParam == WM_KEYUP) {
 		{
-			std::unique_lock<std::mutex> ulock(td->mtx);
-			for (auto& hk : td->hotkeys) {
+			std::unique_lock<std::mutex> ulock(gThreadData.mtx);
+			for (auto& hk : gThreadData.hotkeys) {
 				bool allPressed = true;
 
 				for (std::pair<key_t, bool> k : hk.second.keys) {
 					bool isBound = k.second;
 					bool isPressed = isKeyDown(k.first);
-					
+
 					if ((isBound && !isPressed) ||
 						(!isBound && isPressed))
 						allPressed = false;
@@ -160,10 +155,29 @@ static int32_t HotKeyThread(void* arg) {
 				}
 			}
 		}
-
-		// Sleep 1ms (at most). Actual time varies, no hardware or scheduler is perfect.
-		std::this_thread::sleep_for(std::chrono::milliseconds(1));
 	}
+
+	return CallNextHookEx(hKeyboardHook, nCode, wParam, lParam);
+}
+
+static int32_t HotKeyThread(void* arg) {
+	ThreadData* td = static_cast<ThreadData*>(arg);
+
+	// Temporarily prevent execution until main is ready.
+	{
+		std::unique_lock<std::mutex> ulock(td->mtx);
+	}
+
+	hKeyboardHook = SetWindowsHookEx(WH_KEYBOARD_LL, keyboardProc, NULL, NULL);
+
+	MSG message;
+	while (!td->shutdown) {
+		TranslateMessage(&message);
+		DispatchMessage(&message);
+		std::this_thread::sleep_for(std::chrono::milliseconds(2000));
+	}
+
+	UnhookWindowsHookEx(hKeyboardHook);
 
 	return 0;
 }
