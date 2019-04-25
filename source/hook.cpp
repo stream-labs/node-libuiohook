@@ -301,6 +301,9 @@ std::vector<std::pair<key_t, bool>> StringToKeys(std::string keystr, v8::Local<v
 		std::make_pair("ArrowUp", VK_UP), std::make_pair("ArrowLeft", VK_LEFT),
 		std::make_pair("ArrowRight", VK_RIGHT), std::make_pair("ArrowDown", VK_DOWN),
 
+		/// Media
+		std::make_pair("MediaPlayPause", VK_MEDIA_PLAY_PAUSE), std::make_pair("MediaTrackPrevious", VK_MEDIA_PREV_TRACK),
+		std::make_pair("MediaTrackNext", VK_MEDIA_NEXT_TRACK), std::make_pair("MediaStop", VK_MEDIA_STOP),
 	#else
 		std::make_pair("Escape", VC_ESCAPE),
 		std::make_pair("F1", VC_F1),
