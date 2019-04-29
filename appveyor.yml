@@ -5,15 +5,7 @@ environment:
   matrix:
     - RuntimeURL: https://atom.io/download/atom-shell
       RuntimeName: iojs
-      RuntimeVersion: v2.0.8
-
-    - RuntimeURL: https://atom.io/download/atom-shell
-      RuntimeName: iojs
       RuntimeVersion: v4.1.4
-
-    - RuntimeURL: https://atom.io/download/atom-shell
-      RuntimeName: iojs
-      RuntimeVersion: v5.0.0
 
   NodeVersion: 10
   BuildDirectory: build
