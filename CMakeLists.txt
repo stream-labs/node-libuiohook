@@ -20,7 +20,8 @@ nodejs_init()
 # Source, Libraries & Directories
 #############################
 SET(PROJECT_SOURCE 
-	"${PROJECT_SOURCE_DIR}/source/hook.cpp" "${PROJECT_SOURCE_DIR}/source/hook.h"
+	"${PROJECT_SOURCE_DIR}/source/hook.cpp" 
+	"${PROJECT_SOURCE_DIR}/source/hook.h"
 	"${PROJECT_SOURCE_DIR}/source/module.cpp"
 )
 
@@ -36,9 +37,8 @@ SET(PROJECT_INCLUDE_PATHS
 #############################
 # Building
 #############################
-ADD_LIBRARY(
+add_nodejs_module(
 	${PROJECT_NAME}
-	MODULE
 	${PROJECT_SOURCE}
 )
 
@@ -51,17 +51,24 @@ TARGET_INCLUDE_DIRECTORIES(
 	${PROJECT_NAME}
 	PUBLIC ${PROJECT_INCLUDE_PATHS}
 )
+target_compile_definitions(
+	${PROJECT_NAME}
+	PRIVATE BUILDING_NODE_EXTENSION
+)
+
+if(WIN32)
+	target_compile_definitions(node_libuiohook
+		PRIVATE
+		-D_CRT_SECURE_NO_WARNINGS
+		-DUNICODE
+		-D_UNICODE)
+endif()
 
 SET_TARGET_PROPERTIES(
 	${PROJECT_NAME}
 	PROPERTIES
 	PREFIX ""
 	SUFFIX ".node"
-)
-
-target_compile_definitions(
-	${PROJECT_NAME}
-	PRIVATE BUILDING_NODE_EXTENSION
 )
 
 #############################

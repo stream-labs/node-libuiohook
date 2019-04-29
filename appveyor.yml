@@ -1,20 +1,18 @@
+image:
+  - Visual Studio 2017
+
 environment:
   matrix:
     - RuntimeURL: https://atom.io/download/atom-shell
       RuntimeName: iojs
-      RuntimeVersion: v2.0.5
+      RuntimeVersion: v4.1.4
 
-    - RuntimeURL: https://atom.io/download/atom-shell
-      RuntimeName: iojs
-      RuntimeVersion: v3.0.4
-
-  NodeVersion: 9
+  NodeVersion: 10
   BuildDirectory: build
-  Generator: Visual Studio 14 2015 Win64
+  Generator: Visual Studio 15 2017 Win64
   DistributeDirectory: distribute
-  FullDistributePath: $(SLBuildDirectory)\$(SLDistributeDirectory)
+  FullDistributePath: $(BuildDirectory)\$(DistributeDirectory)
   DistributionAritfact: $(RuntimeName)-$(RuntimeVersion)-node-libuiohook
-  Arch: x64
 
 install:
   - ps: Install-Product node $env:NodeVersion
