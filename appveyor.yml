@@ -13,7 +13,11 @@ environment:
 
     - RuntimeURL: https://atom.io/download/atom-shell
       RuntimeName: iojs
+<<<<<<< HEAD
       RuntimeVersion: v5.0.0
+=======
+      RuntimeVersion: v3.0.4
+>>>>>>> master
 
   NodeVersion: 10
   BuildDirectory: build
