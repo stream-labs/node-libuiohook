@@ -56,6 +56,12 @@ steps:
     tarCompression: gz
     archiveFile: '$(DistributionAritfact).tar.gz'
 
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish build artifact'
+  inputs: 
+    pathtoPublish: $(Build.SourcesDirectory)\$(DistributionAritfact).tar.gz
+    artifactName: $(DistributionAritfact).tar.gz
+
 - task: GithubRelease@0 
   displayName: 'Deploy to GitHub'
   condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))  
