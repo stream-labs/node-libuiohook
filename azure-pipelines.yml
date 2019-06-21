@@ -1,0 +1,65 @@
+trigger:
+  branches:
+    include:
+      - master
+  tags:
+    include:
+      - v*
+
+workspace:
+  clean: all
+
+strategy:
+  matrix:
+    Electron5:
+      RuntimeURL: https://atom.io/download/atom-shell
+      RuntimeName: iojs
+      RuntimeVersion: v5.0.4
+
+pool:
+  vmImage: 'vs2017-win2016'
+
+variables:
+  BuildDirectory: build
+  Generator: Visual Studio 15 2017 Win64
+  DistributeDirectory: distribute
+  FullDistributePath: $(BuildDirectory)\$(DistributeDirectory)
+  DistributionAritfact: $(RuntimeName)-$(RuntimeVersion)-node-libuiohook
+
+steps:
+- powershell: git config --global core.autocrlf false
+  displayName: 'Set Unix checkout for git'
+
+- checkout: self
+  fetchDepth: 10
+
+- task: NodeTool@0
+  displayName: 'Install Node'
+  inputs:
+    versionSpec: '10.x'
+
+- script: 'yarn install'
+  displayName: 'Install dependencies'
+
+- script: 'cmake -H. -B"%BuildDirectory%" -G"%Generator%"  -DCMAKE_INSTALL_PREFIX="%FullDistributePath%\node-libuiohook" -DNODEJS_NAME=%RuntimeName% -DNODEJS_URL=%RuntimeURL% -DNODEJS_VERSION=%RuntimeVersion%'
+  displayName: 'Configure node-libuiohook'
+
+- script: 'cmake --build %BuildDirectory% --target install --config RelWithDebInfo'
+  displayName: 'Build node-libuiohook'
+
+- task: ArchiveFiles@2
+  displayName: 'Generate artifact'
+  inputs:
+    rootFolderOrFile: $(FullDistributePath)\node-libuiohook
+    includeRootFolder: true
+    archiveType: tar
+    tarCompression: gz
+    archiveFile: '$(DistributionAritfact).tar.gz'
+
+- task: GithubRelease@0 
+  displayName: 'Deploy to GitHub'
+  condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))  
+  inputs:
+    gitHubConnection: stream-labs_deploy
+    repositoryName: stream-labs/node-libuiohook
+    assets: $(Build.SourcesDirectory)/$(DistributionAritfact).tar.gz
