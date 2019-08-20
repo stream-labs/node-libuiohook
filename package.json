@@ -14,6 +14,6 @@
   "license": "GPL-3.0-or-later",
   "main": "main.js",
   "devDependencies": {
-    "nan": "2.12.1"
+    "nan": "2.14.0"
   }
 }
