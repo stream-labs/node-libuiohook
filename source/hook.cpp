@@ -151,10 +151,14 @@ static int32_t HotKeyThread(void* arg) {
 				for (std::pair<key_t, bool> k : hk.second.keys) {
 					bool isBound = k.second;
 					bool isPressed = isKeyDown(k.first);
-					
-					if ((isBound && !isPressed) ||
-						(!isBound && isPressed))
+
+					if (isBound && !isPressed) {
 						allPressed = false;
+					} else if (!isBound && isPressed) {
+						if (!hk.second.wasDown) {
+							allPressed = false;
+						}
+					}
 				}
 
 				if (allPressed && !hk.second.wasDown) {
