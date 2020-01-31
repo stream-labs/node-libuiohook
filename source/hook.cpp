@@ -21,7 +21,9 @@
 #include <thread>
 #include <vector>
 #include <inttypes.h>
+#include "uiohook.h"
 
+#ifdef WIN32
 class ForeignWorker {
 	private:
 	uv_async_t * async;
@@ -123,14 +125,7 @@ struct ThreadData {
 } gThreadData;
 
 static bool isKeyDown(key_t k) {
-#if defined(_WIN32)
-	// Windows is incredibly simple, this allows us to query a key without any hooks.
 	return (bool)(GetAsyncKeyState(k) >> 15);
-#elif defined(_MACOS) || defined(_MACOSX)
-
-#elif defined(_LINUX) || defined(_GNU)
-
-#endif
 }
 
 static int32_t HotKeyThread(void* arg) {
@@ -546,5 +541,5 @@ void UnregisterHotkeysJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	std::unique_lock<std::mutex> ulock(gThreadData.mtx);
 	gThreadData.hotkeys.clear();
 }
-
+#endif
 
