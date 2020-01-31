@@ -16,6 +16,12 @@ include(CPack)
 
 nodejs_init()
 
+if(APPLE AND NOT UIOHOOKDIR)
+	message(FATAL_ERROR "UIOHOOKDIR variable is missing.  Please set this variable to specify path to the build dir of libuiohook")
+endif()
+
+message (STATUS "Path to uiohook dir " ${UIOHOOKDIR}/include/)
+
 #############################
 # Source, Libraries & Directories
 #############################
@@ -33,6 +39,11 @@ SET(PROJECT_INCLUDE_PATHS
 	${NODEJS_INCLUDE_DIRS}
 	"${CMAKE_SOURCE_DIR}/source/"
 )
+
+if(APPLE)
+	list(APPEND PROJECT_INCLUDE_PATHS "${UIOHOOKDIR}/include/")
+	list(APPEND PROJECT_LIBRARIES "${UIOHOOKDIR}/lib/libuiohook.dylib")
+endif()
 
 #############################
 # Building
@@ -92,8 +103,18 @@ INSTALL(TARGETS ${PROJECT_NAME}
 	RUNTIME DESTINATION "./" COMPONENT Runtime
 	LIBRARY DESTINATION "./" COMPONENT Runtime
 )
-INSTALL(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> DESTINATION ./ OPTIONAL)
 
+if(WIN32)
+	INSTALL(FILES $<TARGET_PDB_FILE:${PROJECT_NAME}> DESTINATION ./ OPTIONAL)
+endif()
+
+if(APPLE)
+INSTALL (
+	DIRECTORY "${UIOHOOKDIR}/lib/"
+	DESTINATION "./"
+	FILES_MATCHING PATTERN "*.dylib"
+)
+endif()
 
 # JavaScript
 INSTALL(
