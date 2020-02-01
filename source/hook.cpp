@@ -22,8 +22,14 @@
 #include <vector>
 #include <inttypes.h>
 #include "uiohook.h"
+#include <algorithm>
 
-#ifdef WIN32
+#if defined(__APPLE__) && defined(__MACH__)
+#include <CoreFoundation/CoreFoundation.h>
+#endif
+
+#define UIOHOOK_ERROR_THREAD_CREATE 0x10
+
 class ForeignWorker {
 	private:
 	uv_async_t * async;
@@ -91,6 +97,7 @@ class Worker : public ForeignWorker {
 	}
 };
 
+#ifdef WIN32
 typedef int16_t key_t;
 
 static uint32_t jenkings_one_at_a_time(const std::pair<uint8_t, bool>* key, size_t sz) {
@@ -543,3 +550,565 @@ void UnregisterHotkeysJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 }
 #endif
 
+std::map<std::string, int> keyCodesArray;
+std::map<uint16_t, _event_type> modifiers;
+
+struct KeyData {
+	int code;
+};
+
+struct Event {
+	uint16_t key;
+	std::map< uint16_t, _event_type> modifiers;
+};
+
+struct Action {
+	_event_type m_event;
+	Event m_codeEvent;
+	_event_type m_currentState;
+	Nan::Callback *m_js_callBack;
+};
+
+std::vector<Action*> pressedKeyEventCallbacks;
+std::vector<Action*> releasedKeyEventCallbacks;
+
+// int64_t currentModifierCode = 0;
+// int64_t currentModifierState = EVENT_KEY_RELEASED;
+
+// Thread and mutex variables.
+#ifdef _WIN32
+static HANDLE hook_thread;
+
+static HANDLE hook_running_mutex;
+static HANDLE hook_control_mutex;
+static HANDLE hook_control_cond;
+#else
+static pthread_t hook_thread;
+
+static pthread_mutex_t hook_running_mutex;
+static pthread_mutex_t hook_control_mutex;
+static pthread_cond_t hook_control_cond;
+#endif
+
+void updateModifierState(uint16_t key, _event_type state) {
+	if (key == VC_SHIFT_L || key == VC_SHIFT_R) {
+		auto left = modifiers.find(VC_SHIFT_L);
+		if (left != modifiers.end())
+			left->second = state;
+
+		auto right = modifiers.find(VC_SHIFT_R);
+		if (right != modifiers.end())
+			right->second = state;
+	}
+	if (key == VC_CONTROL_L || key == VC_CONTROL_R) {
+		auto left = modifiers.find(VC_CONTROL_L);
+		if (left != modifiers.end())
+			left->second = state;
+
+		auto right = modifiers.find(VC_CONTROL_R);
+		if (right != modifiers.end())
+			right->second = state;
+	}
+	if (key == VC_ALT_L || key == VC_ALT_R) {
+		auto left = modifiers.find(VC_ALT_L);
+		if (left != modifiers.end())
+			left->second = state;
+
+		auto right = modifiers.find(VC_ALT_R);
+		if (right != modifiers.end())
+			right->second = state;
+	}
+	if (key == VC_META_L || key == VC_META_R) {
+		auto left = modifiers.find(VC_META_L);
+		if (left != modifiers.end())
+			left->second = state;
+
+		auto right = modifiers.find(VC_META_R);
+		if (right != modifiers.end())
+			right->second = state;
+	}
+}
+
+void storeStringKeyCodes(void) {
+	keyCodesArray = {
+		std::make_pair("Escape", VC_ESCAPE),
+		std::make_pair("F1", VC_F1),
+		std::make_pair("F2", VC_F2),
+		std::make_pair("F3", VC_F3),
+		std::make_pair("F4", VC_F4),
+		std::make_pair("F5", VC_F5),
+		std::make_pair("F6", VC_F6),
+		std::make_pair("F7", VC_F7),
+		std::make_pair("F8", VC_F8),
+		std::make_pair("F9", VC_F9),
+		std::make_pair("F10", VC_F10),
+		std::make_pair("F11", VC_F11),
+		std::make_pair("F12", VC_F12),
+		std::make_pair("F13", VC_F13),
+		std::make_pair("F14", VC_F14),
+		std::make_pair("F15", VC_F15),
+		std::make_pair("F16", VC_F16),
+		std::make_pair("F17", VC_F17),
+		std::make_pair("F18", VC_F18),
+		std::make_pair("F19", VC_F19),
+		std::make_pair("F20", VC_F20),
+		std::make_pair("F21", VC_F21),
+		std::make_pair("F22", VC_F22),
+		std::make_pair("F23", VC_F23),
+		std::make_pair("F24", VC_F24),
+		std::make_pair("1", VC_1),
+		std::make_pair("2", VC_2),
+		std::make_pair("3", VC_3),
+		std::make_pair("4", VC_4),
+		std::make_pair("5", VC_5),
+		std::make_pair("6", VC_6),
+		std::make_pair("7", VC_7),
+		std::make_pair("8", VC_8),
+		std::make_pair("9", VC_9),
+		std::make_pair("0", VC_0),
+		std::make_pair("Backspace", VC_BACKSPACE),
+		std::make_pair("Tab", VC_TAB),
+		std::make_pair("KeyA", VC_A),
+		std::make_pair("KeyB", VC_B),
+		std::make_pair("KeyC", VC_C),
+		std::make_pair("KeyD", VC_D),
+		std::make_pair("KeyE", VC_E),
+		std::make_pair("KeyF", VC_F),
+		std::make_pair("KeyG", VC_G),
+		std::make_pair("KeyH", VC_H),
+		std::make_pair("KeyI", VC_I),
+		std::make_pair("KeyJ", VC_J),
+		std::make_pair("KeyK", VC_K),
+		std::make_pair("KeyL", VC_L),
+		std::make_pair("KeyM", VC_M),
+		std::make_pair("KeyN", VC_N),
+		std::make_pair("KeyO", VC_O),
+		std::make_pair("KeyP", VC_P),
+		std::make_pair("KeyQ", VC_Q),
+		std::make_pair("KeyR", VC_R),
+		std::make_pair("KeyS", VC_S),
+		std::make_pair("KeyT", VC_T),
+		std::make_pair("KeyU", VC_U),
+		std::make_pair("KeyV", VC_V),
+		std::make_pair("KeyW", VC_W),
+		std::make_pair("KeyX", VC_X),
+		std::make_pair("KeyY", VC_Y),
+		std::make_pair("KeyZ", VC_Z),
+		std::make_pair("Control", MASK_CTRL),
+		std::make_pair("CommandOrControl", MASK_META),
+		std::make_pair("Command", MASK_META),
+		std::make_pair("Alt", MASK_ALT),
+		std::make_pair("Shift", MASK_SHIFT)
+	};
+
+	modifiers = {
+		std::make_pair(VC_SHIFT_L, EVENT_KEY_RELEASED),
+		std::make_pair(VC_SHIFT_R, EVENT_KEY_RELEASED),
+		std::make_pair(VC_CONTROL_L, EVENT_KEY_RELEASED),
+		std::make_pair(VC_CONTROL_R, EVENT_KEY_RELEASED),
+		std::make_pair(VC_ALT_L, EVENT_KEY_RELEASED),
+		std::make_pair(VC_ALT_R, EVENT_KEY_RELEASED),
+		std::make_pair(VC_META_L, EVENT_KEY_RELEASED),
+		std::make_pair(VC_META_R, EVENT_KEY_RELEASED),
+	};
+}
+
+void dispatch_procB(uiohook_event * const event) {
+	switch (event->type) {
+		case EVENT_HOOK_ENABLED:
+			// Lock the running mutex so we know if the hook is enabled.
+			#ifdef _WIN32
+			WaitForSingleObject(hook_running_mutex, INFINITE);
+			#else
+			pthread_mutex_lock(&hook_running_mutex);
+			#endif
+
+
+			#ifdef _WIN32
+			// Signal the control event.
+			SetEvent(hook_control_cond);
+			#else
+			// Unlock the control mutex so hook_enable() can continue.
+			pthread_cond_signal(&hook_control_cond);
+			pthread_mutex_unlock(&hook_control_mutex);
+			#endif
+			break;
+
+		case EVENT_HOOK_DISABLED:
+			// Lock the control mutex until we exit.
+			#ifdef _WIN32
+			WaitForSingleObject(hook_control_mutex, INFINITE);
+			#else
+			pthread_mutex_lock(&hook_control_mutex);
+			#endif
+
+			// Unlock the running mutex so we know if the hook is disabled.
+			#ifdef _WIN32
+			ReleaseMutex(hook_running_mutex);
+			ResetEvent(hook_control_cond);
+			#else
+			#if defined(__APPLE__) && defined(__MACH__)
+			// Stop the main runloop so that this program ends.
+			CFRunLoopStop(CFRunLoopGetMain());
+			#endif
+
+			pthread_mutex_unlock(&hook_running_mutex);
+			#endif
+			break;
+
+		case EVENT_KEY_PRESSED: {
+			// std::cout << "key code " << event->data.keyboard.keycode << std::endl;
+			for (int i = 0; i < pressedKeyEventCallbacks.size(); i++) {
+				if (//If the associated event is an EVENT_KEY_PRESSED type
+					pressedKeyEventCallbacks.at(i)->m_event == EVENT_KEY_PRESSED &&
+					//If the current key pressed is associated with an element in the vector
+					event->data.keyboard.keycode == pressedKeyEventCallbacks.at(i)->m_codeEvent.key &&
+					//If the key is not already pressed
+					pressedKeyEventCallbacks.at(i)->m_currentState != EVENT_KEY_PRESSED) {
+					bool hasModifiers = pressedKeyEventCallbacks.at(i)->m_codeEvent.modifiers.empty();
+					bool modifiersPressed = false;
+
+					for (auto modifier: pressedKeyEventCallbacks.at(i)->m_codeEvent.modifiers) {
+						if (modifier.second != EVENT_KEY_PRESSED) {
+							modifiersPressed = false;
+							break;
+						}
+						modifiersPressed = true;
+					}
+
+					if (hasModifiers == modifiersPressed) {
+						Worker *worker = new Worker(pressedKeyEventCallbacks.at(i)->m_js_callBack);
+						worker->Send();
+
+						pressedKeyEventCallbacks.at(i)->m_currentState = EVENT_KEY_PRESSED;
+						break;
+					}
+				}
+			}
+
+			auto mod_it = modifiers.find(event->data.keyboard.keycode);
+			if (mod_it != modifiers.end())
+				updateModifierState(event->data.keyboard.keycode, EVENT_KEY_PRESSED);
+
+			break;
+		}
+		case EVENT_KEY_RELEASED: {
+			for (int i = 0; i < releasedKeyEventCallbacks.size(); i++) {
+				if (//If the associated event is an EVENT_KEY_RELEASED type
+					releasedKeyEventCallbacks.at(i)->m_event == EVENT_KEY_RELEASED &&
+					//If the current key pressed is associated with an element in the vector
+					event->data.keyboard.keycode == releasedKeyEventCallbacks.at(i)->m_codeEvent.key) {
+						Worker *worker = new Worker(releasedKeyEventCallbacks.at(i)->m_js_callBack);
+						worker->Send();
+
+						break;
+				}
+			}
+
+			for (int i = 0; i < pressedKeyEventCallbacks.size(); i++) {
+				if (//If the associated event is an EVENT_KEY_PRESSED type
+					pressedKeyEventCallbacks.at(i)->m_event == EVENT_KEY_PRESSED &&
+					//If the key is already pressed
+					pressedKeyEventCallbacks.at(i)->m_currentState == EVENT_KEY_PRESSED) {
+					pressedKeyEventCallbacks.at(i)->m_currentState = EVENT_KEY_RELEASED;
+					break;
+				}
+			}
+
+			auto mod_it = modifiers.find(event->data.keyboard.keycode);
+			if (mod_it != modifiers.end())
+				updateModifierState(event->data.keyboard.keycode, EVENT_KEY_RELEASED);
+
+			break;
+		}
+		case EVENT_KEY_TYPED:
+		case EVENT_MOUSE_PRESSED:
+		case EVENT_MOUSE_RELEASED:
+		case EVENT_MOUSE_CLICKED:
+		case EVENT_MOUSE_MOVED:
+		case EVENT_MOUSE_DRAGGED:
+		case EVENT_MOUSE_WHEEL:
+		default:
+			break;
+	}
+}
+
+void *hook_thread_proc(void *arg) {
+	// Set the hook status.
+	int status = hook_run();
+	if (status != UIOHOOK_SUCCESS) {
+		#ifdef _WIN32
+		*(DWORD *)arg = status;
+		#else
+		*(int *)arg = status;
+		#endif
+	}
+
+	// Make sure we signal that we have passed any exception throwing code for
+	// the waiting hook_enable().
+	#ifdef _WIN32
+	SetEvent(hook_control_cond);
+
+	return status;
+	#else
+	// Make sure we signal that we have passed any exception throwing code for
+	// the waiting hook_enable().
+	pthread_cond_signal(&hook_control_cond);
+	pthread_mutex_unlock(&hook_control_mutex);
+
+	return arg;
+	#endif
+}
+
+int hook_enable() {
+	// Lock the thread control mutex.  This will be unlocked when the
+	// thread has finished starting, or when it has fully stopped.
+	#ifdef _WIN32
+	WaitForSingleObject(hook_control_mutex, INFINITE);
+	#else
+	pthread_mutex_lock(&hook_control_mutex);
+	#endif
+
+	// Set the initial status.
+	int status = UIOHOOK_FAILURE;
+
+	#ifndef _WIN32
+	// Create the thread attribute.
+	pthread_attr_t hook_thread_attr;
+	pthread_attr_init(&hook_thread_attr);
+
+	// Get the policy and priority for the thread attr.
+	int policy;
+	pthread_attr_getschedpolicy(&hook_thread_attr, &policy);
+	int priority = sched_get_priority_max(policy);
+	#endif
+
+	#if defined(_WIN32)
+	DWORD hook_thread_id;
+	DWORD *hook_thread_status = (DWORD *)malloc(sizeof(DWORD));
+	hook_thread = CreateThread(NULL, 0, (LPTHREAD_START_ROUTINE)hook_thread_proc, hook_thread_status, 0, &hook_thread_id);
+	if (hook_thread != INVALID_HANDLE_VALUE) {
+		#else
+	int *hook_thread_status = (int*)malloc(sizeof(int));
+	if (pthread_create(&hook_thread, &hook_thread_attr, hook_thread_proc, hook_thread_status) == 0) {
+		#endif
+		#if defined(_WIN32)
+		// Attempt to set the thread priority to time critical.
+		if (SetThreadPriority(hook_thread, THREAD_PRIORITY_TIME_CRITICAL) == 0) {
+		}
+		#elif (defined(__APPLE__) && defined(__MACH__)) || _POSIX_C_SOURCE >= 200112L
+		// Some POSIX revisions do not support pthread_setschedprio so we will 
+		// use pthread_setschedparam instead.
+		struct sched_param param = { .sched_priority = priority };
+		if (pthread_setschedparam(hook_thread, SCHED_OTHER, &param) != 0) {
+		}
+		#else
+		// Raise the thread priority using glibc pthread_setschedprio.
+		if (pthread_setschedprio(hook_thread, priority) != 0) {
+		}
+		#endif
+
+
+		// Wait for the thread to indicate that it has passed the 
+		// initialization portion by blocking until either a EVENT_HOOK_ENABLED 
+		// event is received or the thread terminates.
+		// NOTE This unlocks the hook_control_mutex while we wait.
+		#ifdef _WIN32
+		WaitForSingleObject(hook_control_cond, INFINITE);
+		#else
+		pthread_cond_wait(&hook_control_cond, &hook_control_mutex);
+		#endif
+
+		#ifdef _WIN32
+		if (WaitForSingleObject(hook_running_mutex, 0) != WAIT_TIMEOUT) {
+			#else
+		if (pthread_mutex_trylock(&hook_running_mutex) == 0) {
+			#endif
+			// Lock Successful; The hook is not running but the hook_control_cond 
+			// was signaled!  This indicates that there was a startup problem!
+
+			// Get the status back from the thread.
+			#ifdef _WIN32
+			WaitForSingleObject(hook_thread, INFINITE);
+			GetExitCodeThread(hook_thread, hook_thread_status);
+			#else
+			pthread_join(hook_thread, (void **)&hook_thread_status);
+			status = *hook_thread_status;
+			#endif
+		} else {
+			// Lock Failure; The hook is currently running and wait was signaled
+			// indicating that we have passed all possible start checks.  We can 
+			// always assume a successful startup at this point.
+			status = UIOHOOK_SUCCESS;
+		}
+
+		free(hook_thread_status);
+
+		} else {
+		status = UIOHOOK_ERROR_THREAD_CREATE;
+		}
+
+	// Make sure the control mutex is unlocked.
+	#ifdef _WIN32
+	ReleaseMutex(hook_control_mutex);
+	#else
+	pthread_mutex_unlock(&hook_control_mutex);
+	#endif
+
+	return status;
+}
+
+bool logger_proc(unsigned int level, const char *format, ...) {
+	bool status = false;
+
+	return status;
+}
+
+void StartHotkeyThreadJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	std::cout << "start hotkey" << std::endl;
+	
+	storeStringKeyCodes();
+	// Lock the thread control mutex.  This will be unlocked when the
+	// thread has finished starting, or when it has fully stopped.
+	pthread_mutex_init(&hook_running_mutex, NULL);
+	pthread_mutex_init(&hook_control_mutex, NULL);
+	pthread_cond_init(&hook_control_cond, NULL);
+
+	// Set the logger callback for library output.
+	hook_set_logger_proc(&logger_proc);
+
+	// Set the event callback for uiohook events.
+	hook_set_dispatch_proc(&dispatch_procB);
+
+	// Start the hook and block.
+	// NOTE If EVENT_HOOK_ENABLED was delivered, the status will always succeed.
+	int status = hook_enable();
+}
+
+void StopHotkeyThreadJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	std::cout << "stop hotkey" << std::endl;
+	hook_stop();
+	pthread_mutex_destroy(&hook_running_mutex);
+	pthread_mutex_destroy(&hook_control_mutex);
+	pthread_cond_destroy(&hook_control_cond);
+}
+
+/*
+
+std::vector<std::pair<std::string, int>> keyCodesArray;
+
+struct KeyData {
+	std::string name;
+	int code;
+};
+
+struct Event {
+	KeyData key;
+	KeyData modifier;
+
+};
+
+struct Action {
+	_event_type m_event;
+	Event m_codeEvent;
+	_event_type m_currentState;
+	Nan::Callback *m_js_callBack;
+};
+
+std::vector<Action*> pressedKeyEventCallbacks;
+std::vector<Action*> releasedKeyEventCallbacks;
+
+*/
+
+void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	std::cout << "register hotkey" << std::endl;
+
+	/* interface INodeLibuiohookBinding {
+	 *   callback: () => void;
+	 *   eventType: TKeyEventType;
+	 *   key: string; // Is key code
+	 *   modifiers: {
+	 *     alt: boolean;
+	 *     ctrl: boolean;
+	 *     shift: boolean;
+	 *     meta: boolean;
+	 *   };
+	 * }
+	 */
+
+	Action *action = new Action();
+
+	v8::Local<v8::Object> binds = args[0]->ToObject();
+	Event event;
+
+	std::string key_str = std::string(*v8::String::Utf8Value(binds->Get(v8::String::NewFromUtf8(args.GetIsolate(), "key").ToLocalChecked())));
+	auto key_it = keyCodesArray.find(key_str);
+	
+	if (key_it == keyCodesArray.end()) {
+		std::cout << "Key not found!, key received: " << key_str.c_str() << std::endl;
+		args.GetReturnValue().Set(false);
+		return;
+	}
+
+	event.key = key_it->second;
+	
+	bool modShift, modCtrl, modAlt, modMeta;
+	v8::Local<v8::Object> modifiers = binds->Get(v8::String::NewFromUtf8(args.GetIsolate(), "modifiers").ToLocalChecked())->ToObject();
+	modShift = modifiers->Get(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "shift").ToLocalChecked())->ToBoolean()->BooleanValue();
+	modCtrl = modifiers->Get(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "ctrl").ToLocalChecked())->ToBoolean()->BooleanValue();
+	modAlt = modifiers->Get(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "alt").ToLocalChecked())->ToBoolean()->BooleanValue();
+	modMeta = modifiers->Get(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "meta").ToLocalChecked())->ToBoolean()->BooleanValue();
+
+	if(modShift) {
+		event.modifiers.emplace(std::make_pair(VC_SHIFT_L, EVENT_KEY_RELEASED));
+		event.modifiers.emplace(std::make_pair(VC_SHIFT_R, EVENT_KEY_RELEASED));
+	}
+
+	if(modCtrl) {
+		event.modifiers.emplace(std::make_pair(VC_CONTROL_L, EVENT_KEY_RELEASED));
+		event.modifiers.emplace(std::make_pair(VC_CONTROL_R, EVENT_KEY_RELEASED));
+	}
+
+	if(modAlt) {
+		event.modifiers.emplace(std::make_pair(VC_ALT_L, EVENT_KEY_RELEASED));
+		event.modifiers.emplace(std::make_pair(VC_ALT_R, EVENT_KEY_RELEASED));
+	}
+
+	if(modMeta) {
+		event.modifiers.emplace(std::make_pair(VC_META_L, EVENT_KEY_RELEASED));
+		event.modifiers.emplace(std::make_pair(VC_META_R, EVENT_KEY_RELEASED));
+	}
+
+	action->m_codeEvent = event;
+
+	std::string eventString = std::string(*v8::String::Utf8Value(binds->Get(v8::String::NewFromUtf8(args.GetIsolate(),
+		"eventType").ToLocalChecked())));
+
+	action->m_currentState = EVENT_KEY_RELEASED;
+	action->m_js_callBack = new Nan::Callback(binds->Get(v8::String::NewFromUtf8(
+					args.GetIsolate(), "callback").ToLocalChecked()).As<v8::Function>());
+
+	if (eventString.compare("registerKeydown") == 0) {
+		action->m_event = EVENT_KEY_PRESSED;
+		pressedKeyEventCallbacks.push_back(action);
+	} else if (eventString.compare("registerKeyup") == 0) {
+		action->m_event = EVENT_KEY_RELEASED;
+		releasedKeyEventCallbacks.push_back(action);
+	} else {
+		std::cout << "Invalid event receive: " << eventString.c_str() << std::endl;
+		args.GetReturnValue().Set(false);
+		return;
+	}
+
+	std::cout << "Hotkey correctly registered" << std::endl;
+	args.GetReturnValue().Set(true);
+	return;
+}
+
+void UnregisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	std::cout << "unregister hotkey" << std::endl;
+}
+
+void UnregisterHotkeysJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
+	std::cout << "unregister hotkeys" << std::endl;
+}

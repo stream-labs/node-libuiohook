@@ -15,6 +15,7 @@
 #pragma once
 #include <nan.h>
 #include <uv.h>
+#include <iostream>
 
 void StartHotkeyThreadJS(const v8::FunctionCallbackInfo<v8::Value>& args);
 void StopHotkeyThreadJS(const v8::FunctionCallbackInfo<v8::Value>& args);
