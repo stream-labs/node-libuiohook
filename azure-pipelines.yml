@@ -66,3 +66,50 @@ jobs:
       gitHubConnection: stream-labs_deploy
       repositoryName: stream-labs/node-libuiohook
       assets: $(Build.SourcesDirectory)/$(DistributionAritfact).tar.gz
+
+- job: 'MacOSX'
+  pool:
+    vmImage: 'macos-10.14'
+  workspace:
+    clean: all
+
+  steps:
+  - powershell: git config --global core.autocrlf false
+    displayName: 'Set Unix checkout for git'
+
+  - checkout: self
+    fetchDepth: 10
+
+  - task: NodeTool@0
+    displayName: 'Install Node'
+    inputs:
+      versionSpec: '10.x'
+
+  - script: 'yarn install'
+    displayName: 'Install dependencies'
+
+  - script: './ci/build-osx.sh'
+    displayName: 'Build node-libuiohook'
+
+  - task: ArchiveFiles@2
+    displayName: 'Generate artifact'
+    inputs:
+      rootFolderOrFile: $(FullDistributePath)\node-libuiohook
+      includeRootFolder: true
+      archiveType: tar
+      tarCompression: gz
+      archiveFile: '$(DistributionAritfact).tar.gz'
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish build artifact'
+    inputs: 
+      pathtoPublish: $(Build.SourcesDirectory)\$(DistributionAritfact).tar.gz
+      artifactName: $(DistributionAritfact).tar.gz
+
+  - task: GithubRelease@0 
+    displayName: 'Deploy to GitHub'
+    condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))  
+    inputs:
+      gitHubConnection: stream-labs_deploy
+      repositoryName: stream-labs/node-libuiohook
+      assets: $(Build.SourcesDirectory)/$(DistributionAritfact).tar.gz
