@@ -588,6 +588,10 @@ static pthread_t hook_thread;
 static pthread_mutex_t hook_running_mutex;
 static pthread_mutex_t hook_control_mutex;
 static pthread_cond_t hook_control_cond;
+
+static pthread_mutex_t pressed_keys_mutex;
+static pthread_mutex_t released_keys_mutex;
+
 #endif
 
 void updateModifierState(uint16_t key, _event_type state) {
@@ -757,6 +761,7 @@ void dispatch_procB(uiohook_event * const event) {
 			break;
 
 		case EVENT_KEY_PRESSED: {
+			pthread_mutex_lock(&pressed_keys_mutex);
 			// std::cout << "key code " << event->data.keyboard.keycode << std::endl;
 			for (int i = 0; i < pressedKeyEventCallbacks.size(); i++) {
 				if (//If the associated event is an EVENT_KEY_PRESSED type
@@ -792,9 +797,11 @@ void dispatch_procB(uiohook_event * const event) {
 			if (mod_it != g_modifiers.end())
 				updateModifierState(event->data.keyboard.keycode, EVENT_KEY_PRESSED);
 
+			pthread_mutex_unlock(&pressed_keys_mutex);
 			break;
 		}
 		case EVENT_KEY_RELEASED: {
+			pthread_mutex_lock(&released_keys_mutex);
 			for (int i = 0; i < releasedKeyEventCallbacks.size(); i++) {
 				if (//If the associated event is an EVENT_KEY_RELEASED type
 					releasedKeyEventCallbacks.at(i)->m_event == EVENT_KEY_RELEASED &&
@@ -820,6 +827,7 @@ void dispatch_procB(uiohook_event * const event) {
 			if (mod_it != g_modifiers.end())
 				updateModifierState(event->data.keyboard.keycode, EVENT_KEY_RELEASED);
 
+			pthread_mutex_unlock(&released_keys_mutex);
 			break;
 		}
 		case EVENT_KEY_TYPED:
@@ -987,56 +995,13 @@ void StartHotkeyThreadJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 }
 
 void StopHotkeyThreadJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
-	std::cout << "stop hotkey" << std::endl;
 	hook_stop();
 	pthread_mutex_destroy(&hook_running_mutex);
 	pthread_mutex_destroy(&hook_control_mutex);
 	pthread_cond_destroy(&hook_control_cond);
 }
 
-/*
-
-std::vector<std::pair<std::string, int>> keyCodesArray;
-
-struct KeyData {
-	std::string name;
-	int code;
-};
-
-struct Event {
-	KeyData key;
-	KeyData modifier;
-
-};
-
-struct Action {
-	_event_type m_event;
-	Event m_codeEvent;
-	_event_type m_currentState;
-	Nan::Callback *m_js_callBack;
-};
-
-std::vector<Action*> pressedKeyEventCallbacks;
-std::vector<Action*> releasedKeyEventCallbacks;
-
-*/
-
 void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
-	std::cout << "register hotkey" << std::endl;
-
-	/* interface INodeLibuiohookBinding {
-	 *   callback: () => void;
-	 *   eventType: TKeyEventType;
-	 *   key: string; // Is key code
-	 *   modifiers: {
-	 *     alt: boolean;
-	 *     ctrl: boolean;
-	 *     shift: boolean;
-	 *     meta: boolean;
-	 *   };
-	 * }
-	 */
-
 	Action *action = new Action();
 
 	v8::Local<v8::Object> binds = args[0]->ToObject();
@@ -1091,10 +1056,14 @@ void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 	if (eventString.compare("registerKeydown") == 0) {
 		action->m_event = EVENT_KEY_PRESSED;
+		pthread_mutex_lock(&pressed_keys_mutex);
 		pressedKeyEventCallbacks.push_back(action);
+		pthread_mutex_unlock(&pressed_keys_mutex);
 	} else if (eventString.compare("registerKeyup") == 0) {
 		action->m_event = EVENT_KEY_RELEASED;
+		pthread_mutex_lock(&released_keys_mutex);
 		releasedKeyEventCallbacks.push_back(action);
+		pthread_mutex_unlock(&released_keys_mutex);
 	} else {
 		std::cout << "Invalid event receive: " << eventString.c_str() << std::endl;
 		args.GetReturnValue().Set(false);
@@ -1107,9 +1076,9 @@ void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 }
 
 void UnregisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
-	std::cout << "unregister hotkey" << std::endl;
+	//TODO
 }
 
 void UnregisterHotkeysJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
-	std::cout << "unregister hotkeys" << std::endl;
+	//TODO
 }
