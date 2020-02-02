@@ -550,8 +550,8 @@ void UnregisterHotkeysJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 }
 #endif
 
-std::map<std::string, int> keyCodesArray;
-std::map<uint16_t, _event_type> modifiers;
+std::map<std::string, int> g_keyCodesArray;
+std::map<uint16_t, _event_type> g_modifiers;
 
 struct KeyData {
 	int code;
@@ -592,45 +592,45 @@ static pthread_cond_t hook_control_cond;
 
 void updateModifierState(uint16_t key, _event_type state) {
 	if (key == VC_SHIFT_L || key == VC_SHIFT_R) {
-		auto left = modifiers.find(VC_SHIFT_L);
-		if (left != modifiers.end())
+		auto left = g_modifiers.find(VC_SHIFT_L);
+		if (left != g_modifiers.end())
 			left->second = state;
 
-		auto right = modifiers.find(VC_SHIFT_R);
-		if (right != modifiers.end())
+		auto right = g_modifiers.find(VC_SHIFT_R);
+		if (right != g_modifiers.end())
 			right->second = state;
 	}
 	if (key == VC_CONTROL_L || key == VC_CONTROL_R) {
-		auto left = modifiers.find(VC_CONTROL_L);
-		if (left != modifiers.end())
+		auto left = g_modifiers.find(VC_CONTROL_L);
+		if (left != g_modifiers.end())
 			left->second = state;
 
-		auto right = modifiers.find(VC_CONTROL_R);
-		if (right != modifiers.end())
+		auto right = g_modifiers.find(VC_CONTROL_R);
+		if (right != g_modifiers.end())
 			right->second = state;
 	}
 	if (key == VC_ALT_L || key == VC_ALT_R) {
-		auto left = modifiers.find(VC_ALT_L);
-		if (left != modifiers.end())
+		auto left = g_modifiers.find(VC_ALT_L);
+		if (left != g_modifiers.end())
 			left->second = state;
 
-		auto right = modifiers.find(VC_ALT_R);
-		if (right != modifiers.end())
+		auto right = g_modifiers.find(VC_ALT_R);
+		if (right != g_modifiers.end())
 			right->second = state;
 	}
 	if (key == VC_META_L || key == VC_META_R) {
-		auto left = modifiers.find(VC_META_L);
-		if (left != modifiers.end())
+		auto left = g_modifiers.find(VC_META_L);
+		if (left != g_modifiers.end())
 			left->second = state;
 
-		auto right = modifiers.find(VC_META_R);
-		if (right != modifiers.end())
+		auto right = g_modifiers.find(VC_META_R);
+		if (right != g_modifiers.end())
 			right->second = state;
 	}
 }
 
 void storeStringKeyCodes(void) {
-	keyCodesArray = {
+	g_keyCodesArray = {
 		std::make_pair("Escape", VC_ESCAPE),
 		std::make_pair("F1", VC_F1),
 		std::make_pair("F2", VC_F2),
@@ -701,7 +701,7 @@ void storeStringKeyCodes(void) {
 		std::make_pair("Shift", MASK_SHIFT)
 	};
 
-	modifiers = {
+	g_modifiers = {
 		std::make_pair(VC_SHIFT_L, EVENT_KEY_RELEASED),
 		std::make_pair(VC_SHIFT_R, EVENT_KEY_RELEASED),
 		std::make_pair(VC_CONTROL_L, EVENT_KEY_RELEASED),
@@ -765,11 +765,13 @@ void dispatch_procB(uiohook_event * const event) {
 					event->data.keyboard.keycode == pressedKeyEventCallbacks.at(i)->m_codeEvent.key &&
 					//If the key is not already pressed
 					pressedKeyEventCallbacks.at(i)->m_currentState != EVENT_KEY_PRESSED) {
-					bool hasModifiers = pressedKeyEventCallbacks.at(i)->m_codeEvent.modifiers.empty();
+					bool hasModifiers = !pressedKeyEventCallbacks.at(i)->m_codeEvent.modifiers.empty();
 					bool modifiersPressed = false;
 
 					for (auto modifier: pressedKeyEventCallbacks.at(i)->m_codeEvent.modifiers) {
-						if (modifier.second != EVENT_KEY_PRESSED) {
+						auto mod_it = g_modifiers.find(modifier.first);
+						if (mod_it != g_modifiers.end() &&
+							mod_it->second != EVENT_KEY_PRESSED) {
 							modifiersPressed = false;
 							break;
 						}
@@ -786,8 +788,8 @@ void dispatch_procB(uiohook_event * const event) {
 				}
 			}
 
-			auto mod_it = modifiers.find(event->data.keyboard.keycode);
-			if (mod_it != modifiers.end())
+			auto mod_it = g_modifiers.find(event->data.keyboard.keycode);
+			if (mod_it != g_modifiers.end())
 				updateModifierState(event->data.keyboard.keycode, EVENT_KEY_PRESSED);
 
 			break;
@@ -800,7 +802,6 @@ void dispatch_procB(uiohook_event * const event) {
 					event->data.keyboard.keycode == releasedKeyEventCallbacks.at(i)->m_codeEvent.key) {
 						Worker *worker = new Worker(releasedKeyEventCallbacks.at(i)->m_js_callBack);
 						worker->Send();
-
 						break;
 				}
 			}
@@ -815,8 +816,8 @@ void dispatch_procB(uiohook_event * const event) {
 				}
 			}
 
-			auto mod_it = modifiers.find(event->data.keyboard.keycode);
-			if (mod_it != modifiers.end())
+			auto mod_it = g_modifiers.find(event->data.keyboard.keycode);
+			if (mod_it != g_modifiers.end())
 				updateModifierState(event->data.keyboard.keycode, EVENT_KEY_RELEASED);
 
 			break;
@@ -1042,9 +1043,9 @@ void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	Event event;
 
 	std::string key_str = std::string(*v8::String::Utf8Value(binds->Get(v8::String::NewFromUtf8(args.GetIsolate(), "key").ToLocalChecked())));
-	auto key_it = keyCodesArray.find(key_str);
+	auto key_it = g_keyCodesArray.find(key_str);
 	
-	if (key_it == keyCodesArray.end()) {
+	if (key_it == g_keyCodesArray.end()) {
 		std::cout << "Key not found!, key received: " << key_str.c_str() << std::endl;
 		args.GetReturnValue().Set(false);
 		return;
