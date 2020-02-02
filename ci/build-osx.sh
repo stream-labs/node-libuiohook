@@ -22,3 +22,5 @@ cd ..
 
 # Build
 cmake --build build --target install --config RelWithDebInfo
+
+ls build/directory/node-libuiohook
