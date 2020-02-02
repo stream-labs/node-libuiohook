@@ -6,9 +6,6 @@ trigger:
     include:
       - v*
 
-workspace:
-  clean: all
-
 variables:
   BuildDirectory: build
   Generator: Visual Studio 15 2017 Win64
@@ -23,6 +20,8 @@ jobs:
 - job: 'Windows'
   pool:
     vmImage: 'vs2017-win2016'
+  workspace:
+    clean: all
 
   steps:
   - powershell: git config --global core.autocrlf false
