@@ -94,7 +94,7 @@ jobs:
   - task: ArchiveFiles@2
     displayName: 'Generate artifact'
     inputs:
-      rootFolderOrFile: $(FullDistributePath)\node-libuiohook
+      rootFolderOrFile: $(FullDistributePath)/node-libuiohook
       includeRootFolder: true
       archiveType: tar
       tarCompression: gz
@@ -103,7 +103,7 @@ jobs:
   - task: PublishBuildArtifacts@1
     displayName: 'Publish build artifact'
     inputs: 
-      pathtoPublish: $(Build.SourcesDirectory)\$(DistributionAritfact).tar.gz
+      pathtoPublish: $(Build.SourcesDirectory)/$(DistributionAritfact).tar.gz
       artifactName: $(DistributionAritfact).tar.gz
 
   - task: GithubRelease@0 
