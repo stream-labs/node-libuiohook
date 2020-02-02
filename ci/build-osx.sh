@@ -1,4 +1,4 @@
-brew intstall wget
+brew install wget
 
 # Download libuiohook dependency
 mkdir deps

@@ -94,17 +94,17 @@ jobs:
   - task: ArchiveFiles@2
     displayName: 'Generate artifact'
     inputs:
-      rootFolderOrFile: $(BuildDirectory)/$(DistributeDirectory)/node-libuiohook
+      rootFolderOrFile: build/directory/node-libuiohook
       includeRootFolder: true
       archiveType: tar
       tarCompression: gz
-      archiveFile: '$(DistributionAritfact).tar.gz'
+      archiveFile: '$(DistributionAritfact)-osx.tar.gz'
 
   - task: PublishBuildArtifacts@1
     displayName: 'Publish build artifact'
     inputs: 
-      pathtoPublish: $(Build.SourcesDirectory)/$(DistributionAritfact).tar.gz
-      artifactName: $(DistributionAritfact).tar.gz
+      pathtoPublish: $(Build.SourcesDirectory)/$(DistributionAritfact)-osx.tar.gz
+      artifactName: $(DistributionAritfact)-osx.tar.gz
 
   - task: GithubRelease@0 
     displayName: 'Deploy to GitHub'
@@ -112,4 +112,4 @@ jobs:
     inputs:
       gitHubConnection: stream-labs_deploy
       repositoryName: stream-labs/node-libuiohook
-      assets: $(Build.SourcesDirectory)/$(DistributionAritfact).tar.gz
+      assets: $(Build.SourcesDirectory)/$(DistributionAritfact)-osx.tar.gz
