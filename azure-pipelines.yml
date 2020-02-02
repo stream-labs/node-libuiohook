@@ -94,7 +94,7 @@ jobs:
   - task: ArchiveFiles@2
     displayName: 'Generate artifact'
     inputs:
-      rootFolderOrFile: build/directory/node-libuiohook
+      rootFolderOrFile: build/distribute/node-libuiohook
       includeRootFolder: true
       archiveType: tar
       tarCompression: gz
