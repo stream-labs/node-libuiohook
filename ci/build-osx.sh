@@ -23,12 +23,8 @@ cd ..
 # Build
 cmake --build build --target install --config RelWithDebInfo
 
-echo "SHOW BUILD"
-ls build/
-
-echo "SHOW DESTRIBUTE"
-
-ls build/distribute
-
-echo "SHOW DESTRIBUTE"
-ls build/distribute/node-libuiohook
+# Configure loading path
+sudo install_name_tool -change \
+/usr/local/lib/libuiohook.0.dylib \
+./node_modules/node-libuiohook/libuiohook.0.dylib \
+./build/${DISTRIBUTEDIRECTORY}/node-libuiohook/node_libuiohook.node
