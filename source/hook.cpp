@@ -974,8 +974,6 @@ bool logger_proc(unsigned int level, const char *format, ...) {
 }
 
 void StartHotkeyThreadJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
-	std::cout << "start hotkey" << std::endl;
-	
 	storeStringKeyCodes();
 	// Lock the thread control mutex.  This will be unlocked when the
 	// thread has finished starting, or when it has fully stopped.
@@ -1070,7 +1068,6 @@ void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 		return;
 	}
 
-	std::cout << "Hotkey correctly registered" << std::endl;
 	args.GetReturnValue().Set(true);
 	return;
 }
