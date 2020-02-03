@@ -1080,5 +1080,12 @@ void UnregisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 }
 
 void UnregisterHotkeysJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
-	//TODO
+	pthread_mutex_lock(&pressed_keys_mutex);
+	pthread_mutex_lock(&released_keys_mutex);
+
+	pressedKeyEventCallbacks.clear();
+	releasedKeyEventCallbacks.clear();
+
+	pthread_mutex_unlock(&pressed_keys_mutex);
+	pthread_mutex_unlock(&released_keys_mutex);
 }
