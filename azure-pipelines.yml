@@ -89,6 +89,8 @@ jobs:
     displayName: 'Install dependencies'
 
   - script: './ci/build-osx.sh'
+    env:
+      SENTRY_AUTH_TOKEN: $(sentryAuth)
     displayName: 'Build node-libuiohook'
 
   - task: ArchiveFiles@2

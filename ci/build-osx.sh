@@ -28,3 +28,8 @@ sudo install_name_tool -change \
 /usr/local/lib/libuiohook.0.dylib \
 ./node_modules/node-libuiohook/libuiohook.0.dylib \
 ./build/${DISTRIBUTEDIRECTORY}/node-libuiohook/node_libuiohook.node
+
+#Upload debug files
+curl -sL https://sentry.io/get-cli/ | bash
+dsymutil $PWD/${BUILDDIRECTORY}/${BUILDCONFIG}/node_libuiohook.node
+sentry-cli --auth-token ${SENTRY_AUTH_TOKEN} upload-dif --org streamlabs-obs --project obs-client $PWD/${BUILDDIRECTORY}/${BUILDCONFIG}/node_libuiohook.node.dSYM/Contents/Resources/DWARF/node_libuiohook.node.node
