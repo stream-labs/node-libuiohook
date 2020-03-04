@@ -31,5 +31,6 @@ sudo install_name_tool -change \
 
 #Upload debug files
 curl -sL https://sentry.io/get-cli/ | bash
+
 dsymutil $PWD/${BUILDDIRECTORY}/RelWithDebInfo/node_libuiohook.node
 sentry-cli --auth-token ${SENTRY_AUTH_TOKEN} upload-dif --org streamlabs-obs --project obs-client $PWD/${BUILDDIRECTORY}/RelWithDebInfo/node_libuiohook.node.dSYM/Contents/Resources/DWARF/node_libuiohook.node.node
