@@ -11,6 +11,7 @@ cd build
 
 # Configure
 cmake .. \
+-DCMAKE_OSX_DEPLOYMENT_TARGET=10.11 \
 -DUIOHOOKDIR=${PWD}/../deps/${DEPS} \
 -DCMAKE_BUILD_TYPE=RelWithDebInfo \
 -DCMAKE_INSTALL_PREFIX=${DISTRIBUTEDIRECTORY}/node-libuiohook
