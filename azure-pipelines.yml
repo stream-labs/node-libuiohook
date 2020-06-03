@@ -105,14 +105,14 @@ jobs:
       archiveType: tar
       tarCompression: gz
       archiveFile: '$(tagartifact)-osx.tar.gz'
-      condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
+      condition: and(succeeded(), contains('tags'))
 
   - task: PublishBuildArtifacts@1
     displayName: 'Publish build artifact'
     inputs: 
       pathtoPublish: $(Build.SourcesDirectory)/$(tagartifact)-osx.tar.gz
       artifactName: $(tagartifact)-osx.tar.gz
-      condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
+      condition: and(succeeded(), contains('tags'))
 
   - task: S3Upload@1
     inputs:
@@ -122,4 +122,4 @@ jobs:
       globExpressions: '$(tagartifact)-osx.tar.gz'
       filesAcl: 'public-read'
     displayName: 'Upload tag artifact to S3'
-    condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
+    condition: and(succeeded(), contains('tags'))
