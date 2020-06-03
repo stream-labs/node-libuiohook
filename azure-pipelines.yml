@@ -1,71 +1,125 @@
 trigger:
   branches:
     include:
-      - master
+      - streamlabs
   tags:
     include:
-      - v*
-
-workspace:
-  clean: all
-
-strategy:
-  matrix:
-    Electron5:
-      RuntimeURL: https://atom.io/download/atom-shell
-      RuntimeName: iojs
-      RuntimeVersion: v6.0.3
-
-pool:
-  vmImage: 'vs2017-win2016'
+      - '*'
 
 variables:
   BuildDirectory: build
-  Generator: Visual Studio 15 2017 Win64
+  Generator: Visual Studio 16 2019
   DistributeDirectory: distribute
   FullDistributePath: $(BuildDirectory)\$(DistributeDirectory)
+  RuntimeURL: https://atom.io/download/atom-shell
+  RuntimeName: iojs
+  RuntimeVersion: v6.0.3
   DistributionAritfact: $(RuntimeName)-$(RuntimeVersion)-node-libuiohook
 
-steps:
-- powershell: git config --global core.autocrlf false
-  displayName: 'Set Unix checkout for git'
+jobs:
+- job: 'Windows'
+  pool:
+    vmImage: 'windows-2019'
+  workspace:
+    clean: all
 
-- checkout: self
-  fetchDepth: 10
+  steps:
+  - checkout: self
+    fetchDepth: 10
 
-- task: NodeTool@0
-  displayName: 'Install Node'
-  inputs:
-    versionSpec: '10.x'
+  - powershell: 'Write-Host "##vso[task.setvariable variable=tagartifact]node-libuiohook-$((git.exe describe --tags --abbrev=0) | Out-String)"'
+    displayName: 'Get tag for artifact'
 
-- script: 'yarn install'
-  displayName: 'Install dependencies'
+  - powershell: git config --global core.autocrlf false
+    displayName: 'Set Unix checkout for git'
 
-- script: 'cmake -H. -B"%BuildDirectory%" -G"%Generator%"  -DCMAKE_INSTALL_PREFIX="%FullDistributePath%\node-libuiohook" -DNODEJS_NAME=%RuntimeName% -DNODEJS_URL=%RuntimeURL% -DNODEJS_VERSION=%RuntimeVersion%'
-  displayName: 'Configure node-libuiohook'
+  - task: NodeTool@0
+    displayName: 'Install Node'
+    inputs:
+      versionSpec: '10.x'
 
-- script: 'cmake --build %BuildDirectory% --target install --config RelWithDebInfo'
-  displayName: 'Build node-libuiohook'
+  - script: 'yarn install'
+    displayName: 'Install dependencies'
 
-- task: ArchiveFiles@2
-  displayName: 'Generate artifact'
-  inputs:
-    rootFolderOrFile: $(FullDistributePath)\node-libuiohook
-    includeRootFolder: true
-    archiveType: tar
-    tarCompression: gz
-    archiveFile: '$(DistributionAritfact).tar.gz'
+  - script: 'cmake -H. -B"%BuildDirectory%" -G"%Generator%"  -DCMAKE_INSTALL_PREFIX="%FullDistributePath%\node-libuiohook" -DNODEJS_NAME=%RuntimeName% -DNODEJS_URL=%RuntimeURL% -DNODEJS_VERSION=%RuntimeVersion%'
+    displayName: 'Configure node-libuiohook'
 
-- task: PublishBuildArtifacts@1
-  displayName: 'Publish build artifact'
-  inputs: 
-    pathtoPublish: $(Build.SourcesDirectory)\$(DistributionAritfact).tar.gz
-    artifactName: $(DistributionAritfact).tar.gz
+  - script: 'cmake --build %BuildDirectory% --target install --config RelWithDebInfo'
+    displayName: 'Build node-libuiohook'
 
-- task: GithubRelease@0 
-  displayName: 'Deploy to GitHub'
-  condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))  
-  inputs:
-    gitHubConnection: stream-labs_deploy
-    repositoryName: stream-labs/node-libuiohook
-    assets: $(Build.SourcesDirectory)/$(DistributionAritfact).tar.gz
+  - task: ArchiveFiles@2
+    displayName: 'Generate artifact'
+    inputs:
+      rootFolderOrFile: $(FullDistributePath)\node-libuiohook
+      includeRootFolder: true
+      archiveType: tar
+      tarCompression: gz
+      archiveFile: '$(tagartifact)-win64.tar.gz'
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish build artifact'
+    inputs: 
+      pathtoPublish: $(Build.SourcesDirectory)\$(tagartifact)-win64.tar.gz
+      artifactName: $(tagartifact)-win64.tar.gz
+
+  - task: S3Upload@1
+    inputs:
+      awsCredentials: 'SLOBS_BE_AWS'
+      regionName: 'us-west-2'
+      bucketName: 'slobs-node-libuiohook'
+      globExpressions: '$(tagartifact)-win64.tar.gz'
+      filesAcl: 'public-read'
+    displayName: 'Upload tag artifact to S3'
+    condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
+
+- job: 'MacOSX'
+  pool:
+    vmImage: 'macos-10.15'
+  workspace:
+    clean: all
+
+  steps:
+  - checkout: self
+    fetchDepth: 10
+
+  - powershell: 'Write-Host "##vso[task.setvariable variable=tagartifact]node-libuiohook-$((git describe --tags --abbrev=0) | Out-String)"'
+    displayName: 'Get tag for artifact'
+
+  - task: NodeTool@0
+    displayName: 'Install Node'
+    inputs:
+      versionSpec: '10.x'
+
+  - script: 'yarn install'
+    displayName: 'Install dependencies'
+
+  - script: './ci/build-osx.sh'
+    env:
+      SENTRY_AUTH_TOKEN: $(sentryAuth)
+    displayName: 'Build node-libuiohook'
+
+  - task: ArchiveFiles@2
+    displayName: 'Generate artifact'
+    inputs:
+      rootFolderOrFile: build/distribute/node-libuiohook
+      includeRootFolder: true
+      archiveType: tar
+      tarCompression: gz
+      archiveFile: '$(tagartifact)-osx.tar.gz'
+
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish build artifact'
+    inputs: 
+      pathtoPublish: $(Build.SourcesDirectory)/$(tagartifact)-osx.tar.gz
+      artifactName: $(tagartifact)-osx.tar.gz
+
+  - task: S3Upload@1
+    inputs:
+      awsCredentials: 'SLOBS_BE_AWS'
+      regionName: 'us-west-2'
+      bucketName: 'slobs-node-libuiohook'
+      sourceFolder: '$(Build.SourcesDirectory)'
+      globExpressions: '$(tagartifact)-osx.tar.gz'
+      filesAcl: 'public-read'
+    displayName: 'Upload tag artifact to S3'
+    condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
