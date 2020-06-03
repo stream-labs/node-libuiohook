@@ -8,7 +8,7 @@ wget --quiet --retry-connrefused --waitretry=1 https://obs-studio-deployment.s3-
 mkdir build
 cd build
 
-tar -xf ./${DEPS}.tar.gz -C ./build/deps
+tar -xf ../${DEPS}.tar.gz -C ./build/deps
 
 # Configure
 cmake .. \
