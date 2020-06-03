@@ -1,13 +1,13 @@
 brew install wget
 
 # Download libuiohook dependency
-mkdir deps
 export DEPS="libuiohook-osx-1.1-sl.0"
 wget --quiet --retry-connrefused --waitretry=1 https://obs-studio-deployment.s3-us-west-2.amazonaws.com/libuiohook-osx-1.1-sl.0.tar.gz
 
 mkdir build
 cd build
 
+mkdir deps
 tar -xf ../${DEPS}.tar.gz -C ./deps
 
 # Configure
