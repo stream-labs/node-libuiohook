@@ -117,7 +117,7 @@ jobs:
       awsCredentials: 'SLOBS_BE_AWS'
       regionName: 'us-west-2'
       bucketName: 'slobs-node-libuiohook'
-      globExpressions: '$(Build.SourcesDirectory)/$(tagartifact)-osx.tar.gz'
+      globExpressions: '$(tagartifact)-osx.tar.gz'
       filesAcl: 'public-read'
     displayName: 'Upload tag artifact to S3'
     condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))

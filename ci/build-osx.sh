@@ -4,15 +4,16 @@ brew install wget
 mkdir deps
 export DEPS="libuiohook-osx-1.1-sl.0"
 wget --quiet --retry-connrefused --waitretry=1 https://obs-studio-deployment.s3-us-west-2.amazonaws.com/libuiohook-osx-1.1-sl.0.tar.gz
-tar -xf ./${DEPS}.tar.gz -C ./deps
 
 mkdir build
 cd build
 
+tar -xf ./${DEPS}.tar.gz -C ./build/deps
+
 # Configure
 cmake .. \
 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.11 \
--DUIOHOOKDIR=${PWD}/../deps/${DEPS} \
+-DUIOHOOKDIR=${PWD}/deps/${DEPS} \
 -DCMAKE_BUILD_TYPE=RelWithDebInfo \
 -DCMAKE_INSTALL_PREFIX=${DISTRIBUTEDIRECTORY}/node-libuiohook
 -DNODEJS_NAME=${RUNTIMENAME} \
