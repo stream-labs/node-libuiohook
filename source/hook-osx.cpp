@@ -29,6 +29,7 @@
 // #include <CoreFoundation/CoreFoundation.h>
 
 #include "hook.h"
+#include "uiohook.h"
 
 #include <map>
 #include <CoreFoundation/CoreFoundation.h>
