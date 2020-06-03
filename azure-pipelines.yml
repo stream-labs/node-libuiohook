@@ -105,7 +105,7 @@ jobs:
       includeRootFolder: true
       archiveType: tar
       tarCompression: gz
-      archiveFile: '$(DistributionAritfact).tar.gz'
+      archiveFile: '$(tagartifact)-osx.tar.gz'
 
   - task: PublishBuildArtifacts@1
     displayName: 'Publish build artifact'
