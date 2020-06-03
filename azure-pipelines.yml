@@ -112,14 +112,14 @@ jobs:
     inputs: 
       pathtoPublish: $(Build.SourcesDirectory)/$(tagartifact)-osx.tar.gz
       artifactName: $(tagartifact)-osx.tar.gz
-    condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
 
   - task: S3Upload@1
     inputs:
       awsCredentials: 'SLOBS_BE_AWS'
       regionName: 'us-west-2'
       bucketName: 'slobs-node-libuiohook'
-      globExpressions: $(tagartifact)-osx.tar.gz
+      sourceFolder: '$(Build.SourcesDirectory)'
+      globExpressions: '$(tagartifact)-osx.tar.gz'
       filesAcl: 'public-read'
     displayName: 'Upload tag artifact to S3'
     condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
