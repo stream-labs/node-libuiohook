@@ -29,6 +29,10 @@
 // #include <CoreFoundation/CoreFoundation.h>
 
 #include "hook.h"
+#include "uiohook.h"
+
+#include <map>
+#include <CoreFoundation/CoreFoundation.h>
 
 #define UIOHOOK_ERROR_THREAD_CREATE 0x10
 
@@ -380,7 +384,7 @@ int hook_enable() {
 
 	int *hook_thread_status = (int*)malloc(sizeof(int));
 	if (pthread_create(&hook_thread, &hook_thread_attr, hook_thread_proc, hook_thread_status) == 0) {
-		#if defined(__MACH__)) || _POSIX_C_SOURCE >= 200112L
+		#if defined(__MACH__) || _POSIX_C_SOURCE >= 200112L
 		// Some POSIX revisions do not support pthread_setschedprio so we will 
 		// use pthread_setschedparam instead.
 		struct sched_param param = { .sched_priority = priority };
