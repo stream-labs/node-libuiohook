@@ -26,10 +26,15 @@ message (STATUS "Path to uiohook dir " ${UIOHOOKDIR}/include/)
 # Source, Libraries & Directories
 #############################
 SET(PROJECT_SOURCE 
-	"${PROJECT_SOURCE_DIR}/source/hook.cpp" 
 	"${PROJECT_SOURCE_DIR}/source/hook.h"
 	"${PROJECT_SOURCE_DIR}/source/module.cpp"
 )
+
+IF (WIN32)
+	list(APPEND PROJECT_SOURCE "${PROJECT_SOURCE_DIR}/source/hook-win.cpp")
+ELSEIF (APPLE)
+	list(APPEND PROJECT_SOURCE "${PROJECT_SOURCE_DIR}/source/hook-osx.cpp")
+ENDIF ()
 
 SET(PROJECT_LIBRARIES
 	${NODEJS_LIBRARIES}
