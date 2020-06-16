@@ -395,10 +395,10 @@ std::vector<std::pair<key_t, bool>> StringToKeys(std::string keystr, v8::Local<v
 	};
 
 	bool modShift, modCtrl, modMenu, modMeta;
-	modShift = modifiers->Get(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "shift").ToLocalChecked())->ToBoolean()->BooleanValue();
-	modCtrl = modifiers->Get(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "ctrl").ToLocalChecked())->ToBoolean()->BooleanValue();
-	modMenu = modifiers->Get(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "alt").ToLocalChecked())->ToBoolean()->BooleanValue();
-	modMeta = modifiers->Get(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "meta").ToLocalChecked())->ToBoolean()->BooleanValue();
+	modShift = modifiers->Get(v8::Isolate::GetCurrent()->GetCurrentContext(), v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "shift").ToLocalChecked()).ToLocalChecked()->ToBoolean(v8::Isolate::GetCurrent())->BooleanValue(v8::Isolate::GetCurrent());
+	modCtrl = modifiers->Get(v8::Isolate::GetCurrent()->GetCurrentContext(), v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "ctrl").ToLocalChecked()).ToLocalChecked()->ToBoolean(v8::Isolate::GetCurrent())->BooleanValue(v8::Isolate::GetCurrent());
+	modMenu = modifiers->Get(v8::Isolate::GetCurrent()->GetCurrentContext(), v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "alt").ToLocalChecked()).ToLocalChecked()->ToBoolean(v8::Isolate::GetCurrent())->BooleanValue(v8::Isolate::GetCurrent());
+	modMeta = modifiers->Get(v8::Isolate::GetCurrent()->GetCurrentContext(), v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "meta").ToLocalChecked()).ToLocalChecked()->ToBoolean(v8::Isolate::GetCurrent())->BooleanValue(v8::Isolate::GetCurrent());
 
 
 	std::map<std::string, key_t>::iterator it = g_KeyMap.find(keystr);
@@ -434,13 +434,14 @@ void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	 * }
 	 */
 
-	v8::Local<v8::Object> binds = args[0]->ToObject();
-	std::vector<std::pair<key_t, bool>> keys = StringToKeys(
-		std::string(*v8::String::Utf8Value(binds->Get(v8::String::NewFromUtf8(args.GetIsolate(), "key").ToLocalChecked()))),
-		binds->Get(v8::String::NewFromUtf8(args.GetIsolate(), "modifiers").ToLocalChecked())->ToObject()
-	);
-	std::string eventString = std::string(*v8::String::Utf8Value(binds->Get(v8::String::NewFromUtf8(args.GetIsolate(),
-		"eventType").ToLocalChecked())));
+	v8::Local<v8::Object> binds = args[0]->ToObject(args.GetIsolate()->GetCurrentContext()).ToLocalChecked();
+	auto keyObj = binds->Get(args.GetIsolate()->GetCurrentContext(), v8::String::NewFromUtf8(args.GetIsolate(), "key").ToLocalChecked()).ToLocalChecked();
+	std::string keyString = *v8::String::Utf8Value(args.GetIsolate(), keyObj->ToString(args.GetIsolate()->GetCurrentContext()).ToLocalChecked());
+	auto keyMods = binds->Get(args.GetIsolate()->GetCurrentContext(), v8::String::NewFromUtf8(args.GetIsolate(), "modifiers").ToLocalChecked()).ToLocalChecked()->ToObject(args.GetIsolate()->GetCurrentContext()).ToLocalChecked();
+	std::vector<std::pair<key_t, bool>> keys = StringToKeys(keyString, keyMods);
+	
+	auto eventType = binds->Get(args.GetIsolate()->GetCurrentContext(), v8::String::NewFromUtf8(args.GetIsolate(), "eventType").ToLocalChecked()).ToLocalChecked();
+	std::string eventString = *v8::String::Utf8Value(args.GetIsolate(), eventType->ToString(args.GetIsolate()->GetCurrentContext()).ToLocalChecked());
 
 	if (keys.size() == 0)
 		return;
@@ -455,8 +456,7 @@ void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 			if (!hk->second.cbDown) {
 				// Lock mutex for modifications
 				std::unique_lock<std::mutex> ulock(gThreadData.mtx);
-				hk->second.cbDown = std::make_unique<Nan::Callback>(binds->Get(v8::String::NewFromUtf8(
-					args.GetIsolate(), "callback").ToLocalChecked()).As<v8::Function>());
+				hk->second.cbDown = std::make_unique<Nan::Callback>(binds->Get(args.GetIsolate()->GetCurrentContext(), v8::String::NewFromUtf8(args.GetIsolate(), "callback").ToLocalChecked()).ToLocalChecked().As<v8::Function>());
 			} else {
 				args.GetReturnValue().Set(false);
 				return;
@@ -465,8 +465,7 @@ void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 			if (!hk->second.cbUp) {
 				// Lock mutex for modifications
 				std::unique_lock<std::mutex> ulock(gThreadData.mtx);
-				hk->second.cbUp = std::make_unique<Nan::Callback>(binds->Get(v8::String::NewFromUtf8(
-					args.GetIsolate(), "callback").ToLocalChecked()).As<v8::Function>());
+				hk->second.cbUp = std::make_unique<Nan::Callback>(binds->Get(args.GetIsolate()->GetCurrentContext(), v8::String::NewFromUtf8(args.GetIsolate(), "callback").ToLocalChecked()).ToLocalChecked().As<v8::Function>());
 			} else {
 				args.GetReturnValue().Set(false);
 				return;
@@ -478,11 +477,9 @@ void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 		hk.wasDown = false;
 
 		if (eventString == "registerKeydown") {
-			hk.cbDown = std::make_unique<Nan::Callback>(binds->Get(v8::String::NewFromUtf8(args.GetIsolate(),
-				"callback").ToLocalChecked()).As<v8::Function>());
+			hk.cbDown = std::make_unique<Nan::Callback>(binds->Get(args.GetIsolate()->GetCurrentContext(), v8::String::NewFromUtf8(args.GetIsolate(),"callback").ToLocalChecked()).ToLocalChecked().As<v8::Function>());
 		} else if (eventString == "registerKeyup") {
-			hk.cbUp = std::make_unique<Nan::Callback>(binds->Get(v8::String::NewFromUtf8(args.GetIsolate(),
-				"callback").ToLocalChecked()).As<v8::Function>());
+			hk.cbUp = std::make_unique<Nan::Callback>(binds->Get(args.GetIsolate()->GetCurrentContext(), v8::String::NewFromUtf8(args.GetIsolate(),"callback").ToLocalChecked()).ToLocalChecked().As<v8::Function>());
 		}
 
 		// Lock mutex for modifications
@@ -495,13 +492,14 @@ void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 }
 
 void UnregisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
-	v8::Local<v8::Object> binds = args[0]->ToObject();
-	std::vector<std::pair<key_t, bool>> keys = StringToKeys(
-		std::string(*v8::String::Utf8Value(binds->Get(v8::String::NewFromUtf8(args.GetIsolate(), "key").ToLocalChecked()))),
-		binds->Get(v8::String::NewFromUtf8(args.GetIsolate(), "modifiers").ToLocalChecked())->ToObject()
-	);
-	std::string eventString = std::string(*v8::String::Utf8Value(binds->Get(v8::String::NewFromUtf8(args.GetIsolate(),
-		"eventType").ToLocalChecked())));
+	v8::Local<v8::Object> binds = args[0]->ToObject(args.GetIsolate()->GetCurrentContext()).ToLocalChecked();
+	auto keyObj = binds->Get(args.GetIsolate()->GetCurrentContext(), v8::String::NewFromUtf8(args.GetIsolate(), "key").ToLocalChecked()).ToLocalChecked();
+	std::string keyString = *v8::String::Utf8Value(args.GetIsolate(), keyObj->ToString(args.GetIsolate()->GetCurrentContext()).ToLocalChecked());
+	auto keyMods = binds->Get(args.GetIsolate()->GetCurrentContext(), v8::String::NewFromUtf8(args.GetIsolate(), "modifiers").ToLocalChecked()).ToLocalChecked()->ToObject(args.GetIsolate()->GetCurrentContext()).ToLocalChecked();
+	std::vector<std::pair<key_t, bool>> keys = StringToKeys(keyString, keyMods);
+
+	auto eventType = binds->Get(args.GetIsolate()->GetCurrentContext(), v8::String::NewFromUtf8(args.GetIsolate(), "eventType").ToLocalChecked()).ToLocalChecked();
+	std::string eventString = *v8::String::Utf8Value(args.GetIsolate(), eventType->ToString(args.GetIsolate()->GetCurrentContext()).ToLocalChecked());
 
 	if (keys.size() == 0)
 		return;

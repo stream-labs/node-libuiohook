@@ -9,7 +9,7 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_SOURCE_DIR}/cmake")
 
 SET(NODEJS_URL "https://atom.io/download/atom-shell" CACHE STRING "Node.JS URL")
 SET(NODEJS_NAME "iojs" CACHE STRING "Node.JS Name")
-SET(NODEJS_VERSION "v6.0.3" CACHE STRING "Node.JS Version")
+SET(NODEJS_VERSION "v9.0.4" CACHE STRING "Node.JS Version")
 
 include(NodeJS)
 include(CPack)
