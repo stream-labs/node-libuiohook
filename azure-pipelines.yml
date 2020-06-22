@@ -14,7 +14,7 @@ strategy:
     Electron5:
       RuntimeURL: https://atom.io/download/atom-shell
       RuntimeName: iojs
-      RuntimeVersion: v9.0.4
+      RuntimeVersion: v8.3.3
 
 pool:
   vmImage: 'vs2017-win2016'
