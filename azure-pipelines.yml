@@ -44,6 +44,10 @@ jobs:
   - script: 'cmake -H. -B"%BuildDirectory%" -G"%Generator%"  -DCMAKE_INSTALL_PREFIX="%FullDistributePath%\node-libuiohook" -DNODEJS_NAME=%RuntimeName% -DNODEJS_URL=%RuntimeURL% -DNODEJS_VERSION=%RuntimeVersion%'
     displayName: 'Configure node-libuiohook'
 
+  - script: 'node ci/bump-version.js'
+    displayName: 'Bump version number'
+    condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
+
   - script: 'cmake --build %BuildDirectory% --target install --config RelWithDebInfo'
     displayName: 'Build node-libuiohook'
 
@@ -92,6 +96,10 @@ jobs:
 
   - script: 'yarn install'
     displayName: 'Install dependencies'
+
+  - script: 'node ci/bump-version.js'
+    displayName: 'Bump version number'
+    condition: and(succeeded(), contains(variables['Build.SourceBranch'], 'tags'))
 
   - script: './ci/build-osx.sh'
     env:
