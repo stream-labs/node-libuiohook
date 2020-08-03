@@ -134,16 +134,16 @@ void storeStringKeyCodes(void) {
 		std::make_pair("F22", VC_F22),
 		std::make_pair("F23", VC_F23),
 		std::make_pair("F24", VC_F24),
-		std::make_pair("1", VC_KP_1),
-		std::make_pair("2", VC_KP_2),
-		std::make_pair("3", VC_KP_3),
-		std::make_pair("4", VC_KP_4),
-		std::make_pair("5", VC_KP_5),
-		std::make_pair("6", VC_KP_6),
-		std::make_pair("7", VC_KP_7),
-		std::make_pair("8", VC_KP_8),
-		std::make_pair("9", VC_KP_9),
-		std::make_pair("0", VC_KP_0),
+		std::make_pair("Numpad1", VC_KP_1),
+		std::make_pair("Numpad2", VC_KP_2),
+		std::make_pair("Numpad3", VC_KP_3),
+		std::make_pair("Numpad4", VC_KP_4),
+		std::make_pair("Numpad5", VC_KP_5),
+		std::make_pair("Numpad6", VC_KP_6),
+		std::make_pair("Numpad7", VC_KP_7),
+		std::make_pair("Numpad8", VC_KP_8),
+		std::make_pair("Numpad9", VC_KP_9),
+		std::make_pair("Numpad0", VC_KP_0),
 		std::make_pair("Digit1", VC_1),
 		std::make_pair("Digit2", VC_2),
 		std::make_pair("Digit3", VC_3),
@@ -469,7 +469,6 @@ void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 	std::string key_str = std::string(*v8::String::Utf8Value(binds->Get(v8::String::NewFromUtf8(args.GetIsolate(), "key").ToLocalChecked())));
 	auto key_it = g_keyCodesArray.find(key_str);
-	
 	if (key_it == g_keyCodesArray.end()) {
 		std::cout << "Key not found!, key received: " << key_str.c_str() << std::endl;
 		args.GetReturnValue().Set(false);
