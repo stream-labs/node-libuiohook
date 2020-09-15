@@ -13,7 +13,7 @@ variables:
   FullDistributePath: $(BuildDirectory)\$(DistributeDirectory)
   RuntimeURL: https://atom.io/download/atom-shell
   RuntimeName: iojs
-  RuntimeVersion: v6.0.3
+  RuntimeVersion: v10.1.2
   DistributionAritfact: $(RuntimeName)-$(RuntimeVersion)-node-libuiohook
 
 jobs:
