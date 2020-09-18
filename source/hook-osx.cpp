@@ -52,7 +52,7 @@ struct Action {
 	_event_type m_event;
 	Event m_codeEvent;
 	_event_type m_currentState;
-	Nan::Callback *m_js_callBack;
+	Worker *m_js_callBack;
 };
 
 std::vector<Action*> pressedKeyEventCallbacks;
@@ -293,9 +293,7 @@ void dispatch_procB(uiohook_event * const event) {
 					}
 
 					if (hasModifiers == modifiersPressed) {
-						Worker *worker = new Worker(pressedKeyEventCallbacks.at(i)->m_js_callBack);
-						worker->Send();
-
+						pressedKeyEventCallbacks.at(i)->m_js_callBack->Queue();
 						pressedKeyEventCallbacks.at(i)->m_currentState = EVENT_KEY_PRESSED;
 						break;
 					}
@@ -316,8 +314,7 @@ void dispatch_procB(uiohook_event * const event) {
 					releasedKeyEventCallbacks.at(i)->m_event == EVENT_KEY_RELEASED &&
 					//If the current key pressed is associated with an element in the vector
 					event->data.keyboard.keycode == releasedKeyEventCallbacks.at(i)->m_codeEvent.key) {
-						Worker *worker = new Worker(releasedKeyEventCallbacks.at(i)->m_js_callBack);
-						worker->Send();
+						releasedKeyEventCallbacks.at(i)->m_js_callBack->Queue();
 						break;
 				}
 			}
@@ -435,7 +432,7 @@ bool logger_proc(unsigned int level, const char *format, ...) {
 	return status;
 }
 
-void StartHotkeyThreadJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
+Napi::Value StartHotkeyThreadJS(const Napi::CallbackInfo& info) {
 	storeStringKeyCodes();
 	// Lock the thread control mutex.  This will be unlocked when the
 	// thread has finished starting, or when it has fully stopped.
@@ -454,35 +451,34 @@ void StartHotkeyThreadJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	int status = hook_enable();
 }
 
-void StopHotkeyThreadJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
+Napi::Value StopHotkeyThreadJS(const Napi::CallbackInfo& info) {
 	hook_stop();
 	pthread_mutex_destroy(&hook_running_mutex);
 	pthread_mutex_destroy(&hook_control_mutex);
 	pthread_cond_destroy(&hook_control_cond);
 }
 
-void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
+Napi::Value RegisterHotkeyJS(const Napi::CallbackInfo& info) {
 	Action *action = new Action();
 
-	v8::Local<v8::Object> binds = args[0]->ToObject();
+	Napi::Object binds = info[0].ToObject();
 	Event event;
 
-	std::string key_str = std::string(*v8::String::Utf8Value(binds->Get(v8::String::NewFromUtf8(args.GetIsolate(), "key").ToLocalChecked())));
+	std::string key_str = binds.Get("key").ToString().Utf8Value();
 	auto key_it = g_keyCodesArray.find(key_str);
 	if (key_it == g_keyCodesArray.end()) {
 		std::cout << "Key not found!, key received: " << key_str.c_str() << std::endl;
-		args.GetReturnValue().Set(false);
-		return;
+		return Napi::Boolean::New(info.Env(), false);
 	}
 
 	event.key = key_it->second;
-	
+
 	bool modShift, modCtrl, modAlt, modMeta;
-	v8::Local<v8::Object> modifiers = binds->Get(v8::String::NewFromUtf8(args.GetIsolate(), "modifiers").ToLocalChecked())->ToObject();
-	modShift = modifiers->Get(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "shift").ToLocalChecked())->ToBoolean()->BooleanValue();
-	modCtrl = modifiers->Get(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "ctrl").ToLocalChecked())->ToBoolean()->BooleanValue();
-	modAlt = modifiers->Get(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "alt").ToLocalChecked())->ToBoolean()->BooleanValue();
-	modMeta = modifiers->Get(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "meta").ToLocalChecked())->ToBoolean()->BooleanValue();
+	Napi::Object modifiers = binds.Get("modifiers").ToObject();
+	modShift = modifiers.Get("shift").ToBoolean().Value();
+	modCtrl = modifiers.Get("ctrl").ToBoolean().Value();
+	modAlt = modifiers.Get("alt").ToBoolean().Value();
+	modMeta = modifiers.Get("meta").ToBoolean().Value();
 
 	if(modShift) {
 		event.modifiers.emplace(std::make_pair(VC_SHIFT_L, EVENT_KEY_RELEASED));
@@ -506,12 +502,12 @@ void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 
 	action->m_codeEvent = event;
 
-	std::string eventString = std::string(*v8::String::Utf8Value(binds->Get(v8::String::NewFromUtf8(args.GetIsolate(),
-		"eventType").ToLocalChecked())));
+	std::string eventString = binds.Get("eventType").ToString().Utf8Value();
 
 	action->m_currentState = EVENT_KEY_RELEASED;
-	action->m_js_callBack = new Nan::Callback(binds->Get(v8::String::NewFromUtf8(
-					args.GetIsolate(), "callback").ToLocalChecked()).As<v8::Function>());
+	auto fnc = binds.Get("callback").As<Napi::Function>();
+	action->m_js_callBack = new Worker(fnc);
+	action->m_js_callBack->SuppressDestruct();
 
 	if (eventString.compare("registerKeydown") == 0) {
 		action->m_event = EVENT_KEY_PRESSED;
@@ -525,19 +521,17 @@ void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 		pthread_mutex_unlock(&released_keys_mutex);
 	} else {
 		std::cout << "Invalid event receive: " << eventString.c_str() << std::endl;
-		args.GetReturnValue().Set(false);
-		return;
+		return Napi::Boolean::New(info.Env(), false);
 	}
 
-	args.GetReturnValue().Set(true);
-	return;
+	return Napi::Boolean::New(info.Env(), true);
 }
 
-void UnregisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
+Napi::Value UnregisterHotkeyJS(const Napi::CallbackInfo& info) {
 	//TODO
 }
 
-void UnregisterHotkeysJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
+Napi::Value UnregisterHotkeysJS(const Napi::CallbackInfo& info) {
 	pthread_mutex_lock(&pressed_keys_mutex);
 	pthread_mutex_lock(&released_keys_mutex);
 
