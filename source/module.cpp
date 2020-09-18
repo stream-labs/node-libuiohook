@@ -12,18 +12,12 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#include <node.h>
+#include <napi.h>
 #include "hook.h"
 
-using namespace v8;
-
-void init(Local<Object> exports) {
-    /// Functions ///
-    NODE_SET_METHOD(exports, "startHook", StartHotkeyThreadJS);
-    NODE_SET_METHOD(exports, "stopHook", StopHotkeyThreadJS);
-    NODE_SET_METHOD(exports, "registerCallback", RegisterHotkeyJS);
-    NODE_SET_METHOD(exports, "unregisterCallback", UnregisterHotkeyJS);
-    NODE_SET_METHOD(exports, "unregisterAllCallbacks", UnregisterHotkeysJS);
+Napi::Object main_node(Napi::Env env, Napi::Object exports) {
+    Init(env, exports);
+    return exports;
 }
 
-NODE_MODULE(uiohookModule, init)
+NODE_API_MODULE(uiohookModule, main_node)
