@@ -15,6 +15,24 @@
 #include <napi.h>
 #include "hook.h"
 
+void Init(Napi::Env env, Napi::Object exports) {
+	exports.Set(
+		Napi::String::New(env, "startHook"),
+		Napi::Function::New(env, StartHotkeyThreadJS));
+	exports.Set(
+		Napi::String::New(env, "stopHook"),
+		Napi::Function::New(env, StopHotkeyThreadJS));
+	exports.Set(
+		Napi::String::New(env, "registerCallback"),
+		Napi::Function::New(env, RegisterHotkeyJS));
+	exports.Set(
+		Napi::String::New(env, "unregisterCallback"),
+		Napi::Function::New(env, UnregisterHotkeyJS));
+	exports.Set(
+		Napi::String::New(env, "unregisterAllCallbacks"),
+		Napi::Function::New(env, UnregisterHotkeysJS));
+}
+
 Napi::Object main_node(Napi::Env env, Napi::Object exports) {
     Init(env, exports);
     return exports;

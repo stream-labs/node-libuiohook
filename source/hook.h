@@ -33,8 +33,6 @@ class Worker: public Napi::AsyncWorker
     };
 };
 
-void Init(Napi::Env env, Napi::Object exports);
-
 Napi::Value StartHotkeyThreadJS(const Napi::CallbackInfo& info);
 Napi::Value StopHotkeyThreadJS(const Napi::CallbackInfo& info);
 Napi::Value RegisterHotkeyJS(const Napi::CallbackInfo& info);
