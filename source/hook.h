@@ -17,79 +17,24 @@
 ******************************************************************************/
 
 #pragma once
-#include <nan.h>
-#include <uv.h>
+#include <napi.h>
 #include <iostream>
 
-class ForeignWorker {
-	private:
-	uv_async_t * async;
+class Worker: public Napi::AsyncWorker
+{
+    public:
+    Worker(Napi::Function& callback) : AsyncWorker(callback){};
+    virtual ~Worker() {};
 
-	static void AsyncClose(uv_handle_t *handle) {
-		ForeignWorker *worker =
-			reinterpret_cast<ForeignWorker*>(handle->data);
-
-		worker->Destroy();
-	}
-
-	static NAUV_WORK_CB(AsyncCallback) {
-		ForeignWorker *worker =
-			reinterpret_cast<ForeignWorker*>(async->data);
-		worker->Execute();
-		uv_close(reinterpret_cast<uv_handle_t*>(async), ForeignWorker::AsyncClose);
-	}
-
-	protected:
-	Nan::Callback *callback;
-
-	v8::Local<v8::Value> Call(int argc = 0, v8::Local<v8::Value> params[] = 0) {
-		return callback->Call(argc, params);
-	}
-
-	public:
-	ForeignWorker(Nan::Callback *callback) {
-		async = new uv_async_t;
-
-		uv_async_init(
-			uv_default_loop()
-			, async
-			, AsyncCallback
-		);
-
-		async->data = this;
-		this->callback = callback;
-	}
-
-	void Send() {
-		uv_async_send(async);
-	}
-
-	virtual void Execute() = 0;
-	virtual void Destroy() {
-		delete this;
-	};
-
-	virtual ~ForeignWorker() {
-		delete async;
-	}
+    void Execute() {
+    };
+    void OnOK() {
+        Callback().Call( {} );
+    };
 };
 
-class Worker : public ForeignWorker {
-	public:
-	Worker(Nan::Callback *callback)
-		: ForeignWorker(callback) {}
-
-	virtual void Execute() {
-		Call(0, 0);
-	}
-
-	virtual void Destroy() {
-		delete this;
-	}
-};
-
-void StartHotkeyThreadJS(const v8::FunctionCallbackInfo<v8::Value>& args);
-void StopHotkeyThreadJS(const v8::FunctionCallbackInfo<v8::Value>& args);
-void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args);
-void UnregisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args);
-void UnregisterHotkeysJS(const v8::FunctionCallbackInfo<v8::Value>& args);
+Napi::Value StartHotkeyThreadJS(const Napi::CallbackInfo& info);
+Napi::Value StopHotkeyThreadJS(const Napi::CallbackInfo& info);
+Napi::Value RegisterHotkeyJS(const Napi::CallbackInfo& info);
+Napi::Value UnregisterHotkeyJS(const Napi::CallbackInfo& info);
+Napi::Value UnregisterHotkeysJS(const Napi::CallbackInfo& info);
