@@ -40,7 +40,7 @@ struct Action {
 	_event_type m_event;
 	Event m_codeEvent;
 	_event_type m_currentState;
-	Worker *m_js_callBack;
+	Napi::ThreadSafeFunction js_thread;
 };
 
 std::vector<Action*> pressedKeyEventCallbacks;
@@ -234,6 +234,9 @@ void storeStringKeyCodes(void) {
 }
 
 void dispatch_procB(uiohook_event * const event) {
+	auto callback = []( Napi::Env env, Napi::Function jsCallback ) {
+		jsCallback.Call( {} );
+	};
 	switch (event->type) {
 		case EVENT_HOOK_ENABLED:
 			// Lock the running mutex so we know if the hook is enabled.
@@ -281,8 +284,8 @@ void dispatch_procB(uiohook_event * const event) {
 					}
 
 					if (hasModifiers == modifiersPressed) {
-						if (pressedKeyEventCallbacks.at(i)->m_js_callBack)
-							pressedKeyEventCallbacks.at(i)->m_js_callBack->Queue();
+						if (pressedKeyEventCallbacks.at(i)->js_thread)
+							pressedKeyEventCallbacks.at(i)->js_thread.BlockingCall();
 
 						pressedKeyEventCallbacks.at(i)->m_currentState = EVENT_KEY_PRESSED;
 						break;
@@ -304,8 +307,8 @@ void dispatch_procB(uiohook_event * const event) {
 					releasedKeyEventCallbacks.at(i)->m_event == EVENT_KEY_RELEASED &&
 					//If the current key pressed is associated with an element in the vector
 					event->data.keyboard.keycode == releasedKeyEventCallbacks.at(i)->m_codeEvent.key) {
-						if (releasedKeyEventCallbacks.at(i)->m_js_callBack)
-							releasedKeyEventCallbacks.at(i)->m_js_callBack->Queue();
+						if (releasedKeyEventCallbacks.at(i)->js_thread)
+							releasedKeyEventCallbacks.at(i)->js_thread.BlockingCall();
 						break;
 				}
 			}
@@ -449,6 +452,7 @@ Napi::Value StopHotkeyThreadJS(const Napi::CallbackInfo& info) {
 	pthread_mutex_destroy(&hook_running_mutex);
 	pthread_mutex_destroy(&hook_control_mutex);
 	pthread_cond_destroy(&hook_control_cond);
+
 	return info.Env().Undefined();
 }
 
@@ -500,7 +504,13 @@ Napi::Value RegisterHotkeyJS(const Napi::CallbackInfo& info) {
 
 	action->m_currentState = EVENT_KEY_RELEASED;
 	Napi::Function cb = binds.Get("callback").As<Napi::Function>();
-	action->m_js_callBack = new Worker(cb);
+	action->js_thread = Napi::ThreadSafeFunction::New(
+		info.Env(),
+		cb,
+		"Hotkey: " + event.key,
+		0,
+		1,
+		[] ( Napi::Env ) {});
 
 	if (eventString.compare("registerKeydown") == 0) {
 		action->m_event = EVENT_KEY_PRESSED;
@@ -528,6 +538,16 @@ Napi::Value UnregisterHotkeyJS(const Napi::CallbackInfo& info) {
 Napi::Value UnregisterHotkeysJS(const Napi::CallbackInfo& info) {
 	pthread_mutex_lock(&pressed_keys_mutex);
 	pthread_mutex_lock(&released_keys_mutex);
+
+	for (auto key: pressedKeyEventCallbacks) {
+		if (key->js_thread)
+			key->js_thread.Release();
+	}
+
+	for (auto key: releasedKeyEventCallbacks) {
+		if (key->js_thread)
+			key->js_thread.Release();
+	}
 
 	pressedKeyEventCallbacks.clear();
 	releasedKeyEventCallbacks.clear();

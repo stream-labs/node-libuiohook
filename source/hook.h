@@ -20,19 +20,6 @@
 #include <napi.h>
 #include <iostream>
 
-class Worker: public Napi::AsyncWorker
-{
-    public:
-    Worker(Napi::Function& callback) : AsyncWorker(callback){};
-    virtual ~Worker() {};
-
-    void Execute() {
-    };
-    void OnOK() {
-        Callback().Call( {} );
-    };
-};
-
 Napi::Value StartHotkeyThreadJS(const Napi::CallbackInfo& info);
 Napi::Value StopHotkeyThreadJS(const Napi::CallbackInfo& info);
 Napi::Value RegisterHotkeyJS(const Napi::CallbackInfo& info);
