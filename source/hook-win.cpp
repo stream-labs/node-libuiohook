@@ -25,6 +25,19 @@
 #include <map>
 #include <windows.h>
 
+class Worker: public Napi::AsyncWorker	
+{	
+    public:	
+    Worker(Napi::Function& callback) : AsyncWorker(callback){};	
+    virtual ~Worker() {};	
+
+    void Execute() {	
+    };	
+    void OnOK() {	
+        Callback().Call( {} );	
+    };	
+};
+
 typedef int16_t key_t;
 
 static uint32_t jenkings_one_at_a_time(const std::pair<uint8_t, bool>* key, size_t sz) {
