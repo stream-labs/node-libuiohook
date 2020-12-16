@@ -12,30 +12,18 @@
     along with this program.  If not, see <http://www.gnu.org/licenses/>.
 ******************************************************************************/
 
-#include <napi.h>
+#include <node.h>
 #include "hook.h"
 
-void Init(Napi::Env env, Napi::Object exports) {
-	exports.Set(
-		Napi::String::New(env, "startHook"),
-		Napi::Function::New(env, StartHotkeyThreadJS));
-	exports.Set(
-		Napi::String::New(env, "stopHook"),
-		Napi::Function::New(env, StopHotkeyThreadJS));
-	exports.Set(
-		Napi::String::New(env, "registerCallback"),
-		Napi::Function::New(env, RegisterHotkeyJS));
-	exports.Set(
-		Napi::String::New(env, "unregisterCallback"),
-		Napi::Function::New(env, UnregisterHotkeyJS));
-	exports.Set(
-		Napi::String::New(env, "unregisterAllCallbacks"),
-		Napi::Function::New(env, UnregisterHotkeysJS));
+using namespace v8;
+
+void init(Local<Object> exports) {
+    /// Functions ///
+    NODE_SET_METHOD(exports, "startHook", StartHotkeyThreadJS);
+    NODE_SET_METHOD(exports, "stopHook", StopHotkeyThreadJS);
+    NODE_SET_METHOD(exports, "registerCallback", RegisterHotkeyJS);
+    NODE_SET_METHOD(exports, "unregisterCallback", UnregisterHotkeyJS);
+    NODE_SET_METHOD(exports, "unregisterAllCallbacks", UnregisterHotkeysJS);
 }
 
-Napi::Object main_node(Napi::Env env, Napi::Object exports) {
-    Init(env, exports);
-    return exports;
-}
-
-NODE_API_MODULE(uiohookModule, main_node)
+NODE_MODULE(uiohookModule, init)

@@ -40,7 +40,7 @@ struct Action {
 	_event_type m_event;
 	Event m_codeEvent;
 	_event_type m_currentState;
-	Worker *m_js_callBack;
+	Nan::Callback *m_js_callBack;
 };
 
 std::vector<Action*> pressedKeyEventCallbacks;
@@ -281,8 +281,8 @@ void dispatch_procB(uiohook_event * const event) {
 					}
 
 					if (hasModifiers == modifiersPressed) {
-						if (pressedKeyEventCallbacks.at(i)->m_js_callBack)
-							pressedKeyEventCallbacks.at(i)->m_js_callBack->Queue();
+						Worker *worker = new Worker(pressedKeyEventCallbacks.at(i)->m_js_callBack);
+						worker->Send();
 
 						pressedKeyEventCallbacks.at(i)->m_currentState = EVENT_KEY_PRESSED;
 						break;
@@ -304,8 +304,8 @@ void dispatch_procB(uiohook_event * const event) {
 					releasedKeyEventCallbacks.at(i)->m_event == EVENT_KEY_RELEASED &&
 					//If the current key pressed is associated with an element in the vector
 					event->data.keyboard.keycode == releasedKeyEventCallbacks.at(i)->m_codeEvent.key) {
-						if (releasedKeyEventCallbacks.at(i)->m_js_callBack)
-							releasedKeyEventCallbacks.at(i)->m_js_callBack->Queue();
+						Worker *worker = new Worker(releasedKeyEventCallbacks.at(i)->m_js_callBack);
+						worker->Send();
 						break;
 				}
 			}
@@ -423,7 +423,7 @@ bool logger_proc(unsigned int level, const char *format, ...) {
 	return status;
 }
 
-Napi::Value StartHotkeyThreadJS(const Napi::CallbackInfo& info) {
+void StartHotkeyThreadJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	storeStringKeyCodes();
 	// Lock the thread control mutex.  This will be unlocked when the
 	// thread has finished starting, or when it has fully stopped.
@@ -440,92 +440,92 @@ Napi::Value StartHotkeyThreadJS(const Napi::CallbackInfo& info) {
 	// Start the hook and block.
 	// NOTE If EVENT_HOOK_ENABLED was delivered, the status will always succeed.
 	int status = hook_enable();
-
-	return info.Env().Undefined();
 }
 
-Napi::Value StopHotkeyThreadJS(const Napi::CallbackInfo& info) {
+void StopHotkeyThreadJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	hook_stop();
 	pthread_mutex_destroy(&hook_running_mutex);
 	pthread_mutex_destroy(&hook_control_mutex);
 	pthread_cond_destroy(&hook_control_cond);
-	return info.Env().Undefined();
 }
 
-Napi::Value RegisterHotkeyJS(const Napi::CallbackInfo& info) {
+void RegisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	Action *action = new Action();
 
-	Napi::Object binds = info[0].ToObject();
-	Event event;
+	// v8::Local<v8::Object> binds = args[0]->ToObject(Nan::GetCurrentContext()).FromMaybe(v8::Local<v8::String>());
+	// Event event;
 
-	std::string key_str = binds.Get("key").ToString().Utf8Value();
-	auto key_it = g_keyCodesArray.find(key_str);
-	if (key_it == g_keyCodesArray.end()) {
-		std::cout << "Key not found!, key received: " << key_str.c_str() << std::endl;
-		return Napi::Boolean::New(info.Env(), false);
-	}
+	// v8::Local<v8::String> str = binds->Get(Nan::GetCurrentContext(), Nan::New("key").ToLocalChecked()).FromMaybe(v8::Local<v8::String>());
+	// std::string key_str = std::string(*v8::String::Utf8Value(v8::Isolate::GetCurrent(), str));
+	// auto key_it = g_keyCodesArray.find(key_str);
+	// if (key_it == g_keyCodesArray.end()) {
+	// 	std::cout << "Key not found!, key received: " << key_str.c_str() << std::endl;
+	// 	args.GetReturnValue().Set(false);
+	// 	return;
+	// }
 
-	event.key = key_it->second;
+	// event.key = key_it->second;
 	
 	bool modShift, modCtrl, modAlt, modMeta;
-	Napi::Object modifiers = binds.Get("modifiers").ToObject();
-	modShift = modifiers.Get("shift").ToBoolean().Value();
-	modCtrl = modifiers.Get("ctrl").ToBoolean().Value();
-	modAlt = modifiers.Get("alt").ToBoolean().Value();
-	modMeta	= modifiers.Get("meta").ToBoolean().Value();
+	// v8::Local<v8::Object> modifiers = binds->Get(Nan::GetCurrentContext(), Nan::New("modifiers").ToLocalChecked()).FromMaybe(v8::Local<v8::Object>());
+	// modShift = modifiers->Get(Nan::GetCurrentContext(), v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "shift").ToLocalChecked())->ToBoolean()->BooleanValue();
+	// modCtrl = modifiers->Get(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "ctrl").ToLocalChecked())->ToBoolean()->BooleanValue();
+	// modAlt = modifiers->Get(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "alt").ToLocalChecked())->ToBoolean()->BooleanValue();
+	// modMeta = modifiers->Get(v8::String::NewFromUtf8(v8::Isolate::GetCurrent(), "meta").ToLocalChecked())->ToBoolean()->BooleanValue();
 
-	if(modShift) {
-		event.modifiers.emplace(std::make_pair(VC_SHIFT_L, EVENT_KEY_RELEASED));
-		event.modifiers.emplace(std::make_pair(VC_SHIFT_R, EVENT_KEY_RELEASED));
-	}
+	// if(modShift) {
+	// 	event.modifiers.emplace(std::make_pair(VC_SHIFT_L, EVENT_KEY_RELEASED));
+	// 	event.modifiers.emplace(std::make_pair(VC_SHIFT_R, EVENT_KEY_RELEASED));
+	// }
 
-	if(modCtrl) {
-		event.modifiers.emplace(std::make_pair(VC_CONTROL_L, EVENT_KEY_RELEASED));
-		event.modifiers.emplace(std::make_pair(VC_CONTROL_R, EVENT_KEY_RELEASED));
-	}
+	// if(modCtrl) {
+	// 	event.modifiers.emplace(std::make_pair(VC_CONTROL_L, EVENT_KEY_RELEASED));
+	// 	event.modifiers.emplace(std::make_pair(VC_CONTROL_R, EVENT_KEY_RELEASED));
+	// }
 
-	if(modAlt) {
-		event.modifiers.emplace(std::make_pair(VC_ALT_L, EVENT_KEY_RELEASED));
-		event.modifiers.emplace(std::make_pair(VC_ALT_R, EVENT_KEY_RELEASED));
-	}
+	// if(modAlt) {
+	// 	event.modifiers.emplace(std::make_pair(VC_ALT_L, EVENT_KEY_RELEASED));
+	// 	event.modifiers.emplace(std::make_pair(VC_ALT_R, EVENT_KEY_RELEASED));
+	// }
 
-	if(modMeta) {
-		event.modifiers.emplace(std::make_pair(VC_META_L, EVENT_KEY_RELEASED));
-		event.modifiers.emplace(std::make_pair(VC_META_R, EVENT_KEY_RELEASED));
-	}
+	// if(modMeta) {
+	// 	event.modifiers.emplace(std::make_pair(VC_META_L, EVENT_KEY_RELEASED));
+	// 	event.modifiers.emplace(std::make_pair(VC_META_R, EVENT_KEY_RELEASED));
+	// }
 
-	action->m_codeEvent = event;
+	// action->m_codeEvent = event;
 
-	std::string eventString = binds.Get("eventType").ToString().Utf8Value();
+	// std::string eventString = std::string(*v8::String::Utf8Value(binds->Get(v8::String::NewFromUtf8(args.GetIsolate(),
+	// 	"eventType").ToLocalChecked())));
 
-	action->m_currentState = EVENT_KEY_RELEASED;
-	Napi::Function cb = binds.Get("callback").As<Napi::Function>();
-	action->m_js_callBack = new Worker(cb);
+	// action->m_js_callBack = new Nan::Callback(binds->Get(v8::String::NewFromUtf8(
+	// 				args.GetIsolate(), "callback").ToLocalChecked()).As<v8::Function>());
 
-	if (eventString.compare("registerKeydown") == 0) {
-		action->m_event = EVENT_KEY_PRESSED;
-		pthread_mutex_lock(&pressed_keys_mutex);
-		pressedKeyEventCallbacks.push_back(action);
-		pthread_mutex_unlock(&pressed_keys_mutex);
-	} else if (eventString.compare("registerKeyup") == 0) {
-		action->m_event = EVENT_KEY_RELEASED;
-		pthread_mutex_lock(&released_keys_mutex);
-		releasedKeyEventCallbacks.push_back(action);
-		pthread_mutex_unlock(&released_keys_mutex);
-	} else {
-		std::cout << "Invalid event receive: " << eventString.c_str() << std::endl;
-		return Napi::Boolean::New(info.Env(), false);
-	}
+	// if (eventString.compare("registerKeydown") == 0) {
+	// 	action->m_event = EVENT_KEY_PRESSED;
+	// 	pthread_mutex_lock(&pressed_keys_mutex);
+	// 	pressedKeyEventCallbacks.push_back(action);
+	// 	pthread_mutex_unlock(&pressed_keys_mutex);
+	// } else if (eventString.compare("registerKeyup") == 0) {
+	// 	action->m_event = EVENT_KEY_RELEASED;
+	// 	pthread_mutex_lock(&released_keys_mutex);
+	// 	releasedKeyEventCallbacks.push_back(action);
+	// 	pthread_mutex_unlock(&released_keys_mutex);
+	// } else {
+	// 	std::cout << "Invalid event receive: " << eventString.c_str() << std::endl;
+	// 	args.GetReturnValue().Set(false);
+	// 	return;
+	// }
 
-	return Napi::Boolean::New(info.Env(), true);
+	args.GetReturnValue().Set(true);
+	return;
 }
 
-Napi::Value UnregisterHotkeyJS(const Napi::CallbackInfo& info) {
+void UnregisterHotkeyJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	//TODO
-	return info.Env().Undefined();
 }
 
-Napi::Value UnregisterHotkeysJS(const Napi::CallbackInfo& info) {
+void UnregisterHotkeysJS(const v8::FunctionCallbackInfo<v8::Value>& args) {
 	pthread_mutex_lock(&pressed_keys_mutex);
 	pthread_mutex_lock(&released_keys_mutex);
 
@@ -534,6 +534,4 @@ Napi::Value UnregisterHotkeysJS(const Napi::CallbackInfo& info) {
 
 	pthread_mutex_unlock(&pressed_keys_mutex);
 	pthread_mutex_unlock(&released_keys_mutex);
-
-	return info.Env().Undefined();
 }

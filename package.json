@@ -20,6 +20,6 @@
     "shelljs": "^0.8.4"
   },
   "dependencies": {
-    "node-addon-api": "^3.0.0"
+    "nan": "^2.14.2"
   }
 }
