@@ -43,7 +43,7 @@ SET(PROJECT_INCLUDE_PATHS
 
 if(APPLE)
 	list(APPEND PROJECT_INCLUDE_PATHS "${UIOHOOKDIR}/include/")
-	list(APPEND PROJECT_LIBRARIES "${UIOHOOKDIR}/lib/libuiohook.1.dylib")
+	list(APPEND PROJECT_LIBRARIES "${UIOHOOKDIR}/lib/libuiohook.dylib")
 endif()
 
 # Include N-API wrappers
