@@ -13,7 +13,7 @@ tar -xf ../${DEPS}.tar.gz -C ./deps
 # Configure
 cmake .. \
 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.11 \
--DUIOHOOKDIR=${PWD}/deps \
+-DUIOHOOKDIR=${PWD}/deps/${DEPS} \
 -DCMAKE_BUILD_TYPE=RelWithDebInfo \
 -DCMAKE_INSTALL_PREFIX=${DISTRIBUTEDIRECTORY}/node-libuiohook
 -DNODEJS_NAME=${RUNTIMENAME} \
