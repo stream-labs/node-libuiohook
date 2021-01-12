@@ -531,7 +531,41 @@ Napi::Value RegisterHotkeyJS(const Napi::CallbackInfo& info) {
 }
 
 Napi::Value UnregisterHotkeyJS(const Napi::CallbackInfo& info) {
-	//TODO
+	pthread_mutex_lock(&pressed_keys_mutex);
+	pthread_mutex_lock(&released_keys_mutex);
+
+	Napi::Object binds = info[0].ToObject();
+	Event event;
+	std::string key_str = binds.Get("key").ToString().Utf8Value();
+	auto key_it = g_keyCodesArray.find(key_str);
+	if (key_it == g_keyCodesArray.end()) {
+		std::cout << "Key not found!, key received: " << key_str.c_str() << std::endl;
+		return Napi::Boolean::New(info.Env(), false);
+	}
+
+	event.key = key_it->second;
+	bool found_key = false;
+
+	auto removeKeyFromCb = [&found_key, &event](std::vector<Action*>& vec) mutable {
+        for (std::vector<Action*>::iterator act = vec.begin(); act != vec.end();) {
+             	if ((*act)->m_codeEvent.key == event.key) {
+          		found_key = true;
+                if ((*act)->js_thread)
+			(*act)->js_thread.Release();
+                act = vec.erase(act);
+            } else {
+		++act;
+		}
+	}
+	};
+
+	removeKeyFromCb(pressedKeyEventCallbacks);
+	if (!found_key) {
+        	removeKeyFromCb(releasedKeyEventCallbacks);
+    	}
+
+	pthread_mutex_unlock(&pressed_keys_mutex);
+	pthread_mutex_unlock(&released_keys_mutex);
 	return info.Env().Undefined();
 }
 
