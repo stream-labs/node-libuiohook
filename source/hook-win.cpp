@@ -20,6 +20,8 @@
 
 #include <thread>
 #include <mutex>
+#include <iostream>
+#include <sstream>
 #include <inttypes.h>
 #include <vector>
 #include <map>
@@ -40,26 +42,18 @@ class Worker: public Napi::AsyncWorker
 
 typedef int16_t key_t;
 
-static uint32_t jenkings_one_at_a_time(const std::pair<uint8_t, bool>* key, size_t sz) {
-	size_t p = 0; uint32_t hash = 0;
-	while (p < sz) {
-		hash += key[p++].first;
-		hash += hash << 10;
-		hash ^= hash >> 6;
-	}
-	hash += hash << 3;
-	hash ^= hash >> 11;
-	hash += hash << 15;
-	return hash;
-}
-
 struct HotKey {
 	std::vector<std::pair<key_t, bool>> keys;
 	std::unique_ptr<Worker> cbDown, cbUp;
 	bool wasDown = false;
 
 	static uint32_t Stringify(std::vector<std::pair<key_t, bool>> keys) {
-		return jenkings_one_at_a_time(reinterpret_cast<std::pair<uint8_t, bool>*>(keys.data()), keys.size() * (sizeof(key_t) + sizeof(bool)));
+		std::ostringstream os;
+		for (size_t idx=0; idx < keys.size(); idx++) {
+			os << keys[idx].first << ":" << keys[idx].second << "|";
+		}
+		std::string outString = os.str();
+		return std::hash<std::string>{}(outString);
 	};
 };
 
@@ -371,6 +365,7 @@ Napi::Value RegisterHotkeyJS(const Napi::CallbackInfo& info) {
 		binds.Get("key").ToString().Utf8Value(),
 		binds.Get("modifiers").ToObject()
 	);
+
 	std::string eventString = binds.Get("eventType").ToString().Utf8Value();
 
 	if (keys.size() == 0)
@@ -434,8 +429,10 @@ Napi::Value UnregisterHotkeyJS(const Napi::CallbackInfo& info) {
 		return Napi::Boolean::New(info.Env(), false);
 
 	uint32_t key = HotKey::Stringify(keys);
-	if (!gThreadData.hotkeys.count(key))
+	if (!gThreadData.hotkeys.count(key)) {
+		std::cout << "Cannot find key " << key << std::endl;
 		return Napi::Boolean::New(info.Env(), false);
+	}
 
 	// Lock mutex for modifications
 	std::unique_lock<std::mutex> ulock(gThreadData.mtx);
@@ -460,7 +457,6 @@ Napi::Value UnregisterHotkeyJS(const Napi::CallbackInfo& info) {
 	if ((hk->second.cbUp == nullptr) && (hk->second.cbDown == nullptr)) {
 		gThreadData.hotkeys.erase(key);
 	}
-
 	return Napi::Boolean::New(info.Env(), true);
 }
 
