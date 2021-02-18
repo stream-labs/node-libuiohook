@@ -365,7 +365,6 @@ Napi::Value RegisterHotkeyJS(const Napi::CallbackInfo& info) {
 		binds.Get("key").ToString().Utf8Value(),
 		binds.Get("modifiers").ToObject()
 	);
-
 	std::string eventString = binds.Get("eventType").ToString().Utf8Value();
 
 	if (keys.size() == 0)
@@ -433,7 +432,6 @@ Napi::Value UnregisterHotkeyJS(const Napi::CallbackInfo& info) {
 		std::cout << "Cannot find key " << key << std::endl;
 		return Napi::Boolean::New(info.Env(), false);
 	}
-
 	// Lock mutex for modifications
 	std::unique_lock<std::mutex> ulock(gThreadData.mtx);
 
@@ -447,12 +445,11 @@ Napi::Value UnregisterHotkeyJS(const Napi::CallbackInfo& info) {
 		}
 	} else if (eventString == "registerKeyup") {
 		if (hk->second.cbUp) {
-			hk->second.cbDown = nullptr;
+			hk->second.cbUp = nullptr;
 		} else {
 			return Napi::Boolean::New(info.Env(), false);
 		}
 	}
-
 	// If both callbacks were removed, don't bother keeping the object around.
 	if ((hk->second.cbUp == nullptr) && (hk->second.cbDown == nullptr)) {
 		gThreadData.hotkeys.erase(key);
