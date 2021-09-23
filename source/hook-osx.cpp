@@ -56,6 +56,8 @@ static pthread_cond_t hook_control_cond;
 static pthread_mutex_t pressed_keys_mutex;
 static pthread_mutex_t released_keys_mutex;
 
+int hook_status = UIOHOOK_FAILURE;
+
 void updateModifierState(uint16_t key, _event_type state) {
 	if (key == VC_SHIFT_L || key == VC_SHIFT_R) {
 		auto left = g_modifiers.find(VC_SHIFT_L);
@@ -356,13 +358,13 @@ void *hook_thread_proc(void *arg) {
 	return arg;
 }
 
-int hook_enable() {
+void hook_enable() {
 	// Lock the thread control mutex.  This will be unlocked when the
 	// thread has finished starting, or when it has fully stopped.
 	pthread_mutex_lock(&hook_control_mutex);
 
 	// Set the initial status.
-	int status = UIOHOOK_FAILURE;
+	hook_status = UIOHOOK_FAILURE;
 
 	// Create the thread attribute.
 	pthread_attr_t hook_thread_attr;
@@ -400,24 +402,22 @@ int hook_enable() {
 
 			// Get the status back from the thread.
 			pthread_join(hook_thread, (void **)&hook_thread_status);
-			status = *hook_thread_status;
+			hook_status = *hook_thread_status;
 		} else {
 			// Lock Failure; The hook is currently running and wait was signaled
 			// indicating that we have passed all possible start checks.  We can 
 			// always assume a successful startup at this point.
-			status = UIOHOOK_SUCCESS;
+			hook_status = UIOHOOK_SUCCESS;
 		}
 
 		free(hook_thread_status);
 
 		} else {
-		status = UIOHOOK_ERROR_THREAD_CREATE;
+			hook_status = UIOHOOK_ERROR_THREAD_CREATE;
 		}
 
 	// Make sure the control mutex is unlocked.
 	pthread_mutex_unlock(&hook_control_mutex);
-
-	return status;
 }
 
 bool logger_proc(unsigned int level, const char *format, ...) {
@@ -442,16 +442,18 @@ Napi::Value StartHotkeyThreadJS(const Napi::CallbackInfo& info) {
 
 	// Start the hook and block.
 	// NOTE If EVENT_HOOK_ENABLED was delivered, the status will always succeed.
-	int status = hook_enable();
+	hook_enable();
 
 	return info.Env().Undefined();
 }
 
 Napi::Value StopHotkeyThreadJS(const Napi::CallbackInfo& info) {
-	hook_stop();
-	pthread_mutex_destroy(&hook_running_mutex);
-	pthread_mutex_destroy(&hook_control_mutex);
-	pthread_cond_destroy(&hook_control_cond);
+	if (!hook_status) {
+		hook_stop();
+		pthread_mutex_destroy(&hook_running_mutex);
+		pthread_mutex_destroy(&hook_control_mutex);
+		pthread_cond_destroy(&hook_control_cond);
+	}
 
 	return info.Env().Undefined();
 }
