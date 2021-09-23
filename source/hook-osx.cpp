@@ -56,7 +56,7 @@ static pthread_cond_t hook_control_cond;
 static pthread_mutex_t pressed_keys_mutex;
 static pthread_mutex_t released_keys_mutex;
 
-int hook_status = 0;
+int hook_status = UIOHOOK_FAILURE;
 
 void updateModifierState(uint16_t key, _event_type state) {
 	if (key == VC_SHIFT_L || key == VC_SHIFT_R) {
