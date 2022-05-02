@@ -18,8 +18,7 @@ variables:
 
 jobs:
 - job: 'Windows'
-  pool:
-    vmImage: 'Default'
+  pool: 'Default'
   workspace:
     clean: all
 
