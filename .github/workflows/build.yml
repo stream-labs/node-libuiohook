@@ -82,13 +82,13 @@ jobs:
       - name: Run symbol server scripts
         run: ./symsrv-scripts/main.bat "${{ github.workspace }}/symsrv-scripts" ".\main.ps1 -localSourceDir '${{ github.workspace }}' -repo_userId 'stream-labs' -repo_name 'streamlabs-overlay' -repo_branch '${{ github.sha }}'"
         env:
-          AWS_SYMB_ACCESS_KEY_ID: ${{secrets.AWS_SECRET_ACCESS_KEY}}
+          AWS_SYMB_ACCESS_KEY_ID: ${{secrets.AWS_SYMB_SECRET_ACCESS_KEY}}
           AWS_SYMB_SECRET_ACCESS_KEY: ${{secrets.AWS_SYMB_ACCESS_KEY_ID}}
         shell: powershell
 
   upload_release_package:
     needs: build
-    name: 'Upload relase package'
+    name: 'Upload release package win'
     runs-on: windows-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:
@@ -138,6 +138,8 @@ jobs:
         run: yarn install --immutable --immutable-cache --check-cache
       - name: Build
         run: './ci/build-osx.sh'
+        env:
+          SENTRY_AUTH_TOKEN: $(secrets.SENTRY_AUTH_TOKEN)
       - name: Put version into package.json
         if: startsWith(github.ref, 'refs/tags/')
         run: node ./ci/bump-version.js "${{ steps.get_version.outputs.VERSION }}" "${{env.PACKAGE_PATH}}"
@@ -151,7 +153,7 @@ jobs:
  
   upload_release_package_macos:
     needs: build_macos
-    name: 'Upload relase package'
+    name: 'Upload release package macos'
     runs-on: macos-latest
     if: startsWith(github.ref, 'refs/tags/')
     steps:

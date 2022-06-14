@@ -15,10 +15,7 @@ cmake .. \
 -DCMAKE_OSX_DEPLOYMENT_TARGET=10.11 \
 -DUIOHOOKDIR=${PWD}/deps/${DEPS} \
 -DCMAKE_BUILD_TYPE=RelWithDebInfo \
--DCMAKE_INSTALL_PREFIX=${DISTRIBUTEDIRECTORY}/node-libuiohook
--DNODEJS_NAME=${RUNTIMENAME} \
--DNODEJS_URL=${RUNTIMEURL} \
--DNODEJS_VERSION=${RUNTIMEVERSION}
+-DCMAKE_INSTALL_PREFIX=${DISTRIBUTE_DIRECTORY}/node-libuiohook
 
 cd ..
 
@@ -29,11 +26,11 @@ cmake --build build --target install --config RelWithDebInfo
 sudo install_name_tool -change \
 @rpath/libuiohook.1.dylib \
 ./node_modules/node-libuiohook/libuiohook.1.dylib \
-./build/${DISTRIBUTEDIRECTORY}/node-libuiohook/node_libuiohook.node
+./build/${DISTRIBUTE_DIRECTORY}/node-libuiohook/node_libuiohook.node
 
 #Upload debug files
 curl -sL https://sentry.io/get-cli/ | bash
-dsymutil $PWD/${BUILDDIRECTORY}/RelWithDebInfo/node_libuiohook.node
-sentry-cli --auth-token ${SENTRY_AUTH_TOKEN} upload-dif --org streamlabs-obs --project obs-client $PWD/${BUILDDIRECTORY}/RelWithDebInfo/node_libuiohook.node.dSYM/Contents/Resources/DWARF/node_libuiohook.node
+dsymutil $PWD/${BUILD_DIRECTORY}/RelWithDebInfo/node_libuiohook.node
+sentry-cli --auth-token ${SENTRY_AUTH_TOKEN} upload-dif --org streamlabs-obs --project obs-client $PWD/${BUILD_DIRECTORY}/RelWithDebInfo/node_libuiohook.node.dSYM/Contents/Resources/DWARF/node_libuiohook.node
 
 rm -rf ./build/deps
