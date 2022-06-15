@@ -180,7 +180,7 @@ jobs:
         if: steps.cache-check.outputs.cache-hit != 'true'
         run: exit 1
       - name: Tar artifact for deployment
-        run: tar -cvzf ${{env.TARGET_ARTIFACT}}.tar.gz -C "${{env.INSTALL_DISTRIBUTE_PATH}}"" ${{env.PACKAGE_DIRECTORY}}
+        run: tar -cvzf ${{env.TARGET_ARTIFACT}}.tar.gz -C "${{env.INSTALL_DISTRIBUTE_PATH}}" ${{env.PACKAGE_DIRECTORY}}
         env:
           TARGET_ARTIFACT: ${{env.PACKAGE_NAME}}-${{ steps.get_version.outputs.VERSION }}-osx
           INSTALL_DISTRIBUTE_PATH: "${{env.BUILD_DIRECTORY}}/${{env.DISTRIBUTE_DIRECTORY}}"
