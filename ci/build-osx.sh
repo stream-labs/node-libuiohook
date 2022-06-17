@@ -1,3 +1,5 @@
+set -e
+
 brew install wget
 
 # Download libuiohook dependency
