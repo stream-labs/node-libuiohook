@@ -58,7 +58,7 @@ jobs:
         env:
           PACKAGE_PATH: "${{env.BUILD_DIRECTORY}}/${{env.DISTRIBUTE_DIRECTORY}}/${{env.PACKAGE_DIRECTORY}}"
       - name: Cache build
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{env.BUILD_DIRECTORY}}
           key: ${{ runner.os }}-build-${{ github.sha }}
@@ -71,7 +71,7 @@ jobs:
     steps:
       - name: Get build from cache
         id: cache-check
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{env.BUILD_DIRECTORY}}
           key: ${{ runner.os }}-build-${{ github.sha }}
@@ -96,6 +96,8 @@ jobs:
     name: 'Upload release package win'
     runs-on: windows-latest
     if: startsWith(github.ref, 'refs/tags/')
+    env:
+      OS_TAG: "win64"
     steps:
       - name: Get the version
         id: get_version
@@ -103,7 +105,7 @@ jobs:
         shell: bash
       - name: Get build from cache
         id: cache-check
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{env.BUILD_DIRECTORY}}
           key: ${{ runner.os }}-build-${{ github.sha }}
@@ -113,7 +115,7 @@ jobs:
       - name: Tar artifact for deployment
         run: tar -cvzf ${{env.TARGET_ARTIFACT}}.tar.gz -C ${{env.INSTALL_DISTRIBUTE_PATH}} ${{env.PACKAGE_DIRECTORY}}
         env:
-          TARGET_ARTIFACT: ${{env.PACKAGE_NAME}}-${{ steps.get_version.outputs.VERSION }}-win64
+          TARGET_ARTIFACT: ${{env.PACKAGE_NAME}}-${{ steps.get_version.outputs.VERSION }}-${{env.OS_TAG}}
           INSTALL_DISTRIBUTE_PATH: "${{env.BUILD_DIRECTORY}}/${{env.DISTRIBUTE_DIRECTORY}}"
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -124,7 +126,7 @@ jobs:
       - name: Deploy
         run: aws s3 cp ${{env.TARGET_ARTIFACT}}.tar.gz s3://${{env.RELEASE_BUCKET}} --acl public-read
         env:
-          TARGET_ARTIFACT: ${{env.PACKAGE_NAME}}-${{ steps.get_version.outputs.VERSION }}-win64
+          TARGET_ARTIFACT: ${{env.PACKAGE_NAME}}-${{ steps.get_version.outputs.VERSION }}-${{env.OS_TAG}}
 
   build_macos:
     name: 'Build a package MacOS'
@@ -155,16 +157,18 @@ jobs:
         env:
           PACKAGE_PATH: "${{env.BUILD_DIRECTORY}}/${{env.DISTRIBUTE_DIRECTORY}}/${{env.PACKAGE_DIRECTORY}}"
       - name: Cache build
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{env.BUILD_DIRECTORY}}
           key: ${{ runner.os }}-build-${{ github.sha }}
- 
+
   upload_release_package_macos:
     needs: build_macos
     name: 'Upload release package macos'
     runs-on: macos-latest
     if: startsWith(github.ref, 'refs/tags/')
+    env:
+      OS_TAG: "osx"
     steps:
       - name: Get the version
         id: get_version
@@ -172,7 +176,7 @@ jobs:
         shell: bash
       - name: Get build from cache
         id: cache-check
-        uses: actions/cache@v2
+        uses: actions/cache@v3
         with:
           path: ${{env.BUILD_DIRECTORY}}
           key: ${{ runner.os }}-build-${{ github.sha }}
@@ -182,7 +186,7 @@ jobs:
       - name: Tar artifact for deployment
         run: tar -cvzf ${{env.TARGET_ARTIFACT}}.tar.gz -C "${{env.INSTALL_DISTRIBUTE_PATH}}" ${{env.PACKAGE_DIRECTORY}}
         env:
-          TARGET_ARTIFACT: ${{env.PACKAGE_NAME}}-${{ steps.get_version.outputs.VERSION }}-osx
+          TARGET_ARTIFACT: ${{env.PACKAGE_NAME}}-${{ steps.get_version.outputs.VERSION }}-${{env.OS_TAG}}
           INSTALL_DISTRIBUTE_PATH: "${{env.BUILD_DIRECTORY}}/${{env.DISTRIBUTE_DIRECTORY}}"
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -193,4 +197,4 @@ jobs:
       - name: Deploy
         run: aws s3 cp ${{env.TARGET_ARTIFACT}}.tar.gz s3://${{env.RELEASE_BUCKET}} --acl public-read
         env:
-          TARGET_ARTIFACT: ${{env.PACKAGE_NAME}}-${{ steps.get_version.outputs.VERSION }}-osx
+          TARGET_ARTIFACT: ${{env.PACKAGE_NAME}}-${{ steps.get_version.outputs.VERSION }}-${{env.OS_TAG}}
