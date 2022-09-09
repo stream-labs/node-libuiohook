@@ -44,6 +44,9 @@ jobs:
           node-version: '16.x'
       - name: Install dependencies
         run: yarn install --immutable --immutable-cache --check-cache
+      - uses: GuillaumeFalourd/setup-windows10-sdk-action@v1.7
+        with:
+          sdk-version: 22000
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v1
       - name: Configure
