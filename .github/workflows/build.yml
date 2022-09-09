@@ -47,7 +47,7 @@ jobs:
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v1
       - name: Configure
-        run: cmake -H"${{ github.workspace }}" -B"${{env.BUILD_DIRECTORY}}" -G"Visual Studio 16 2019" -A x64 -DNODEJS_VERSION="${{env.ELECTRON_VERSION}}" -DCMAKE_INSTALL_PREFIX="${{env.INSTALL_PACKAGE_PATH}}" -DCMAKE_SYSTEM_VERSION=10.0.22000
+        run: cmake -H"${{ github.workspace }}" -B"${{env.BUILD_DIRECTORY}}" -G"Visual Studio 16 2019" -A x64 -DNODEJS_VERSION="${{env.ELECTRON_VERSION}}" -DCMAKE_INSTALL_PREFIX="${{env.INSTALL_PACKAGE_PATH}}" -DCMAKE_SYSTEM_VERSION="10.0.22000.0"
         env:
           INSTALL_PACKAGE_PATH: "${{env.BUILD_DIRECTORY}}/${{env.DISTRIBUTE_DIRECTORY}}/${{env.PACKAGE_DIRECTORY}}"
       - name: Build
