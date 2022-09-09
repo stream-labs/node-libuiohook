@@ -27,7 +27,7 @@ permissions:
 jobs:
   build:
     name: 'Build a package'
-    runs-on: windows-latest
+    runs-on: windows-2019
     steps:
       - uses: actions/checkout@v3
       - name: Show GitHub context
@@ -47,7 +47,7 @@ jobs:
       - name: Add MSBuild to PATH
         uses: microsoft/setup-msbuild@v1
       - name: Configure
-        run: cmake -H"${{ github.workspace }}" -B"${{env.BUILD_DIRECTORY}}" -G"Visual Studio 17 2022" -A x64 -DNODEJS_VERSION="${{env.ELECTRON_VERSION}}" -DCMAKE_INSTALL_PREFIX="${{env.INSTALL_PACKAGE_PATH}}"
+        run: cmake -H"${{ github.workspace }}" -B"${{env.BUILD_DIRECTORY}}" -G"Visual Studio 16 2019" -A x64 -DNODEJS_VERSION="${{env.ELECTRON_VERSION}}" -DCMAKE_INSTALL_PREFIX="${{env.INSTALL_PACKAGE_PATH}}" -DCMAKE_SYSTEM_VERSION=10.0.22000
         env:
           INSTALL_PACKAGE_PATH: "${{env.BUILD_DIRECTORY}}/${{env.DISTRIBUTE_DIRECTORY}}/${{env.PACKAGE_DIRECTORY}}"
       - name: Build
@@ -66,7 +66,7 @@ jobs:
   upload_debug_symbols:
     needs: build
     name: 'Upload debug symbols'
-    runs-on: windows-latest
+    runs-on: windows-2019
     if: startsWith(github.ref, 'refs/tags/')
     steps:
       - name: Get build from cache
@@ -94,7 +94,7 @@ jobs:
   upload_release_package:
     needs: build
     name: 'Upload release package win'
-    runs-on: windows-latest
+    runs-on: windows-2019
     if: startsWith(github.ref, 'refs/tags/')
     env:
       OS_TAG: "win64"
