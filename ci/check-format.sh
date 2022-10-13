@@ -43,7 +43,7 @@ fi
 
 find . -type d \( \
     -path ./\*build -o \
-    -path ./cmake -o \
+    -path ./cmake \
 \) -prune -false -type f -o \
     -name '*.h' -or \
     -name '*.hpp' -or \
