@@ -23,5 +23,5 @@ jobs:
 
       - name: 'Run clang-format'
         run: |
-          ./CI/check-format.sh
-          ./CI/check-changes.sh
+          ./ci/check-format.sh
+          ./ci/check-changes.sh
