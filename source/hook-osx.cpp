@@ -101,23 +101,26 @@ void updateModifierState(uint16_t key, _event_type state)
 void storeStringKeyCodes(void)
 {
 	g_keyCodesArray = {
-		std::make_pair("Escape", VC_ESCAPE), std::make_pair("F1", VC_F1), std::make_pair("F2", VC_F2), std::make_pair("F3", VC_F3), std::make_pair("F4", VC_F4),
-		std::make_pair("F5", VC_F5), std::make_pair("F6", VC_F6), std::make_pair("F7", VC_F7), std::make_pair("F8", VC_F8), std::make_pair("F9", VC_F9),
-		std::make_pair("F10", VC_F10), std::make_pair("F11", VC_F11), std::make_pair("F12", VC_F12), std::make_pair("F13", VC_F13), std::make_pair("F14", VC_F14),
-		std::make_pair("F15", VC_F15), std::make_pair("F16", VC_F16), std::make_pair("F17", VC_F17), std::make_pair("F18", VC_F18), std::make_pair("F19", VC_F19),
-		std::make_pair("F20", VC_F20), std::make_pair("F21", VC_F21), std::make_pair("F22", VC_F22), std::make_pair("F23", VC_F23), std::make_pair("F24", VC_F24),
+		std::make_pair("Escape", VC_ESCAPE), std::make_pair("F1", VC_F1), std::make_pair("F2", VC_F2), std::make_pair("F3", VC_F3),
+		std::make_pair("F4", VC_F4), std::make_pair("F5", VC_F5), std::make_pair("F6", VC_F6), std::make_pair("F7", VC_F7), std::make_pair("F8", VC_F8),
+		std::make_pair("F9", VC_F9), std::make_pair("F10", VC_F10), std::make_pair("F11", VC_F11), std::make_pair("F12", VC_F12),
+		std::make_pair("F13", VC_F13), std::make_pair("F14", VC_F14), std::make_pair("F15", VC_F15), std::make_pair("F16", VC_F16),
+		std::make_pair("F17", VC_F17), std::make_pair("F18", VC_F18), std::make_pair("F19", VC_F19), std::make_pair("F20", VC_F20),
+		std::make_pair("F21", VC_F21), std::make_pair("F22", VC_F22), std::make_pair("F23", VC_F23), std::make_pair("F24", VC_F24),
 		std::make_pair("Numpad1", VC_KP_1), std::make_pair("Numpad2", VC_KP_2), std::make_pair("Numpad3", VC_KP_3), std::make_pair("Numpad4", VC_KP_4),
 		std::make_pair("Numpad5", VC_KP_5), std::make_pair("Numpad6", VC_KP_6), std::make_pair("Numpad7", VC_KP_7), std::make_pair("Numpad8", VC_KP_8),
 		std::make_pair("Numpad9", VC_KP_9), std::make_pair("Numpad0", VC_KP_0), std::make_pair("Digit1", VC_1), std::make_pair("Digit2", VC_2),
-		std::make_pair("Digit3", VC_3), std::make_pair("Digit4", VC_4), std::make_pair("Digit5", VC_5), std::make_pair("Digit6", VC_6), std::make_pair("Digit7", VC_7),
-		std::make_pair("Digit8", VC_8), std::make_pair("Digit9", VC_9), std::make_pair("Digit0", VC_0), std::make_pair("Backspace", VC_BACKSPACE),
-		std::make_pair("Tab", VC_TAB), std::make_pair("KeyA", VC_A), std::make_pair("KeyB", VC_B), std::make_pair("KeyC", VC_C), std::make_pair("KeyD", VC_D),
-		std::make_pair("KeyE", VC_E), std::make_pair("KeyF", VC_F), std::make_pair("KeyG", VC_G), std::make_pair("KeyH", VC_H), std::make_pair("KeyI", VC_I),
-		std::make_pair("KeyJ", VC_J), std::make_pair("KeyK", VC_K), std::make_pair("KeyL", VC_L), std::make_pair("KeyM", VC_M), std::make_pair("KeyN", VC_N),
-		std::make_pair("KeyO", VC_O), std::make_pair("KeyP", VC_P), std::make_pair("KeyQ", VC_Q), std::make_pair("KeyR", VC_R), std::make_pair("KeyS", VC_S),
-		std::make_pair("KeyT", VC_T), std::make_pair("KeyU", VC_U), std::make_pair("KeyV", VC_V), std::make_pair("KeyW", VC_W), std::make_pair("KeyX", VC_X),
-		std::make_pair("KeyY", VC_Y), std::make_pair("KeyZ", VC_Z), std::make_pair("Control", MASK_CTRL), std::make_pair("CommandOrControl", MASK_META),
-		std::make_pair("Command", MASK_META), std::make_pair("Alt", MASK_ALT), std::make_pair("Shift", MASK_SHIFT),
+		std::make_pair("Digit3", VC_3), std::make_pair("Digit4", VC_4), std::make_pair("Digit5", VC_5), std::make_pair("Digit6", VC_6),
+		std::make_pair("Digit7", VC_7), std::make_pair("Digit8", VC_8), std::make_pair("Digit9", VC_9), std::make_pair("Digit0", VC_0),
+		std::make_pair("Backspace", VC_BACKSPACE), std::make_pair("Tab", VC_TAB), std::make_pair("KeyA", VC_A), std::make_pair("KeyB", VC_B),
+		std::make_pair("KeyC", VC_C), std::make_pair("KeyD", VC_D), std::make_pair("KeyE", VC_E), std::make_pair("KeyF", VC_F),
+		std::make_pair("KeyG", VC_G), std::make_pair("KeyH", VC_H), std::make_pair("KeyI", VC_I), std::make_pair("KeyJ", VC_J),
+		std::make_pair("KeyK", VC_K), std::make_pair("KeyL", VC_L), std::make_pair("KeyM", VC_M), std::make_pair("KeyN", VC_N),
+		std::make_pair("KeyO", VC_O), std::make_pair("KeyP", VC_P), std::make_pair("KeyQ", VC_Q), std::make_pair("KeyR", VC_R),
+		std::make_pair("KeyS", VC_S), std::make_pair("KeyT", VC_T), std::make_pair("KeyU", VC_U), std::make_pair("KeyV", VC_V),
+		std::make_pair("KeyW", VC_W), std::make_pair("KeyX", VC_X), std::make_pair("KeyY", VC_Y), std::make_pair("KeyZ", VC_Z),
+		std::make_pair("Control", MASK_CTRL), std::make_pair("CommandOrControl", MASK_META), std::make_pair("Command", MASK_META),
+		std::make_pair("Alt", MASK_ALT), std::make_pair("Shift", MASK_SHIFT),
 
 		// Keyboard
 		std::make_pair("Backspace", VC_BACKSPACE), std::make_pair("Tab", VC_TAB), std::make_pair("Clear", VC_CLEAR), std::make_pair("Enter", VC_ENTER),
@@ -126,32 +129,36 @@ void storeStringKeyCodes(void)
 		// std::make_pair("OSLeft", VK_LWIN), std::make_pair("OSRight", VK_RWIN),
 		std::make_pair("Pause", VC_PAUSE),
 		// std::make_pair("Capital", VK_CAPITAL),
-		std::make_pair("CapsLock", VC_CAPS_LOCK), std::make_pair("NumLock", VC_NUM_LOCK), std::make_pair("ScrollLock", VC_SCROLL_LOCK), std::make_pair("Escape", VC_ESCAPE),
-		std::make_pair("Space", VC_SPACE), std::make_pair("PageUp", VC_KP_PAGE_UP), std::make_pair("PageDown", VC_KP_PAGE_DOWN), std::make_pair("Home", VC_KP_HOME),
-		std::make_pair("End", VC_KP_END), std::make_pair("Left", VC_KP_LEFT), std::make_pair("Right", VC_KP_RIGHT), std::make_pair("Up", VC_KP_UP),
-		std::make_pair("Down", VC_KP_DOWN),
+		std::make_pair("CapsLock", VC_CAPS_LOCK), std::make_pair("NumLock", VC_NUM_LOCK), std::make_pair("ScrollLock", VC_SCROLL_LOCK),
+		std::make_pair("Escape", VC_ESCAPE), std::make_pair("Space", VC_SPACE), std::make_pair("PageUp", VC_KP_PAGE_UP),
+		std::make_pair("PageDown", VC_KP_PAGE_DOWN), std::make_pair("Home", VC_KP_HOME), std::make_pair("End", VC_KP_END),
+		std::make_pair("Left", VC_KP_LEFT), std::make_pair("Right", VC_KP_RIGHT), std::make_pair("Up", VC_KP_UP), std::make_pair("Down", VC_KP_DOWN),
 		// std::make_pair("Select", VK_SELECT),
 		// std::make_pair("Print", VK_PRINT),
 		// std::make_pair("Execute", VK_EXECUTE),
 		// std::make_pair("Snapshot", VK_SNAPSHOT),
-		std::make_pair("PrintScreen", VC_PRINTSCREEN), std::make_pair("Insert", VC_SUN_INSERT), std::make_pair("Delete", VC_DELETE), std::make_pair("Help", VC_SUN_HELP),
+		std::make_pair("PrintScreen", VC_PRINTSCREEN), std::make_pair("Insert", VC_SUN_INSERT), std::make_pair("Delete", VC_DELETE),
+		std::make_pair("Help", VC_SUN_HELP),
 		// std::make_pair("Apps", VK_APPS),
 		std::make_pair("Sleep", VC_SLEEP),
 
 		/// OEM Keys
-		std::make_pair("Semicolon", VC_SEMICOLON), std::make_pair("Equal", VC_EQUALS), std::make_pair("Comma", VC_COMMA), std::make_pair("Minus", VC_MINUS),
-		std::make_pair("Period", VC_PERIOD), std::make_pair("Slash", VC_SLASH), std::make_pair("Backquote", VC_BACKQUOTE), std::make_pair("BracketLeft", VC_OPEN_BRACKET),
-		std::make_pair("Backslash", VC_BACK_SLASH), std::make_pair("BracketRight", VC_CLOSE_BRACKET), std::make_pair("Quote", VC_QUOTE),
+		std::make_pair("Semicolon", VC_SEMICOLON), std::make_pair("Equal", VC_EQUALS), std::make_pair("Comma", VC_COMMA),
+		std::make_pair("Minus", VC_MINUS), std::make_pair("Period", VC_PERIOD), std::make_pair("Slash", VC_SLASH),
+		std::make_pair("Backquote", VC_BACKQUOTE), std::make_pair("BracketLeft", VC_OPEN_BRACKET), std::make_pair("Backslash", VC_BACK_SLASH),
+		std::make_pair("BracketRight", VC_CLOSE_BRACKET), std::make_pair("Quote", VC_QUOTE),
 		// Arrows
-		std::make_pair("ArrowUp", VC_UP), std::make_pair("ArrowLeft", VC_LEFT), std::make_pair("ArrowRight", VC_RIGHT), std::make_pair("ArrowDown", VC_DOWN),
+		std::make_pair("ArrowUp", VC_UP), std::make_pair("ArrowLeft", VC_LEFT), std::make_pair("ArrowRight", VC_RIGHT),
+		std::make_pair("ArrowDown", VC_DOWN),
 
 		/// Media
-		std::make_pair("MediaPlayPause", VC_MEDIA_PLAY), std::make_pair("MediaTrackPrevious", VC_MEDIA_PREVIOUS), std::make_pair("MediaTrackNext", VC_MEDIA_NEXT),
-		std::make_pair("MediaStop", VC_MEDIA_STOP)};
+		std::make_pair("MediaPlayPause", VC_MEDIA_PLAY), std::make_pair("MediaTrackPrevious", VC_MEDIA_PREVIOUS),
+		std::make_pair("MediaTrackNext", VC_MEDIA_NEXT), std::make_pair("MediaStop", VC_MEDIA_STOP)};
 
 	g_modifiers = {
-		std::make_pair(VC_SHIFT_L, EVENT_KEY_RELEASED),   std::make_pair(VC_SHIFT_R, EVENT_KEY_RELEASED), std::make_pair(VC_CONTROL_L, EVENT_KEY_RELEASED),
-		std::make_pair(VC_CONTROL_R, EVENT_KEY_RELEASED), std::make_pair(VC_ALT_L, EVENT_KEY_RELEASED),   std::make_pair(VC_ALT_R, EVENT_KEY_RELEASED),
+		std::make_pair(VC_SHIFT_L, EVENT_KEY_RELEASED),   std::make_pair(VC_SHIFT_R, EVENT_KEY_RELEASED),
+		std::make_pair(VC_CONTROL_L, EVENT_KEY_RELEASED), std::make_pair(VC_CONTROL_R, EVENT_KEY_RELEASED),
+		std::make_pair(VC_ALT_L, EVENT_KEY_RELEASED),     std::make_pair(VC_ALT_R, EVENT_KEY_RELEASED),
 		std::make_pair(VC_META_L, EVENT_KEY_RELEASED),    std::make_pair(VC_META_R, EVENT_KEY_RELEASED),
 	};
 }
