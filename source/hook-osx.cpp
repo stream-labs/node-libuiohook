@@ -33,7 +33,7 @@ struct KeyData {
 
 struct Event {
 	uint16_t key;
-	std::map< uint16_t, _event_type> modifiers;
+	std::map<uint16_t, _event_type> modifiers;
 };
 
 struct Action {
@@ -43,8 +43,8 @@ struct Action {
 	Napi::ThreadSafeFunction js_thread;
 };
 
-std::vector<Action*> pressedKeyEventCallbacks;
-std::vector<Action*> releasedKeyEventCallbacks;
+std::vector<Action *> pressedKeyEventCallbacks;
+std::vector<Action *> releasedKeyEventCallbacks;
 
 // Thread and mutex variables.
 static pthread_t hook_thread;
@@ -58,7 +58,8 @@ static pthread_mutex_t released_keys_mutex;
 
 int hook_status = UIOHOOK_FAILURE;
 
-void updateModifierState(uint16_t key, _event_type state) {
+void updateModifierState(uint16_t key, _event_type state)
+{
 	if (key == VC_SHIFT_L || key == VC_SHIFT_R) {
 		auto left = g_modifiers.find(VC_SHIFT_L);
 		if (left != g_modifiers.end())
@@ -97,254 +98,180 @@ void updateModifierState(uint16_t key, _event_type state) {
 	}
 }
 
-void storeStringKeyCodes(void) {
+void storeStringKeyCodes(void)
+{
 	g_keyCodesArray = {
-		std::make_pair("Escape", VC_ESCAPE),
-		std::make_pair("F1", VC_F1),
-		std::make_pair("F2", VC_F2),
-		std::make_pair("F3", VC_F3),
-		std::make_pair("F4", VC_F4),
-		std::make_pair("F5", VC_F5),
-		std::make_pair("F6", VC_F6),
-		std::make_pair("F7", VC_F7),
-		std::make_pair("F8", VC_F8),
-		std::make_pair("F9", VC_F9),
-		std::make_pair("F10", VC_F10),
-		std::make_pair("F11", VC_F11),
-		std::make_pair("F12", VC_F12),
-		std::make_pair("F13", VC_F13),
-		std::make_pair("F14", VC_F14),
-		std::make_pair("F15", VC_F15),
-		std::make_pair("F16", VC_F16),
-		std::make_pair("F17", VC_F17),
-		std::make_pair("F18", VC_F18),
-		std::make_pair("F19", VC_F19),
-		std::make_pair("F20", VC_F20),
-		std::make_pair("F21", VC_F21),
-		std::make_pair("F22", VC_F22),
-		std::make_pair("F23", VC_F23),
-		std::make_pair("F24", VC_F24),
-		std::make_pair("Numpad1", VC_KP_1),
-		std::make_pair("Numpad2", VC_KP_2),
-		std::make_pair("Numpad3", VC_KP_3),
-		std::make_pair("Numpad4", VC_KP_4),
-		std::make_pair("Numpad5", VC_KP_5),
-		std::make_pair("Numpad6", VC_KP_6),
-		std::make_pair("Numpad7", VC_KP_7),
-		std::make_pair("Numpad8", VC_KP_8),
-		std::make_pair("Numpad9", VC_KP_9),
-		std::make_pair("Numpad0", VC_KP_0),
-		std::make_pair("Digit1", VC_1),
-		std::make_pair("Digit2", VC_2),
-		std::make_pair("Digit3", VC_3),
-		std::make_pair("Digit4", VC_4),
-		std::make_pair("Digit5", VC_5),
-		std::make_pair("Digit6", VC_6),
-		std::make_pair("Digit7", VC_7),
-		std::make_pair("Digit8", VC_8),
-		std::make_pair("Digit9", VC_9),
-		std::make_pair("Digit0", VC_0),
-		std::make_pair("Backspace", VC_BACKSPACE),
-		std::make_pair("Tab", VC_TAB),
-		std::make_pair("KeyA", VC_A),
-		std::make_pair("KeyB", VC_B),
-		std::make_pair("KeyC", VC_C),
-		std::make_pair("KeyD", VC_D),
-		std::make_pair("KeyE", VC_E),
-		std::make_pair("KeyF", VC_F),
-		std::make_pair("KeyG", VC_G),
-		std::make_pair("KeyH", VC_H),
-		std::make_pair("KeyI", VC_I),
-		std::make_pair("KeyJ", VC_J),
-		std::make_pair("KeyK", VC_K),
-		std::make_pair("KeyL", VC_L),
-		std::make_pair("KeyM", VC_M),
-		std::make_pair("KeyN", VC_N),
-		std::make_pair("KeyO", VC_O),
-		std::make_pair("KeyP", VC_P),
-		std::make_pair("KeyQ", VC_Q),
-		std::make_pair("KeyR", VC_R),
-		std::make_pair("KeyS", VC_S),
-		std::make_pair("KeyT", VC_T),
-		std::make_pair("KeyU", VC_U),
-		std::make_pair("KeyV", VC_V),
-		std::make_pair("KeyW", VC_W),
-		std::make_pair("KeyX", VC_X),
-		std::make_pair("KeyY", VC_Y),
-		std::make_pair("KeyZ", VC_Z),
-		std::make_pair("Control", MASK_CTRL),
-		std::make_pair("CommandOrControl", MASK_META),
-		std::make_pair("Command", MASK_META),
-		std::make_pair("Alt", MASK_ALT),
-		std::make_pair("Shift", MASK_SHIFT),
+		std::make_pair("Escape", VC_ESCAPE), std::make_pair("F1", VC_F1), std::make_pair("F2", VC_F2), std::make_pair("F3", VC_F3),
+		std::make_pair("F4", VC_F4), std::make_pair("F5", VC_F5), std::make_pair("F6", VC_F6), std::make_pair("F7", VC_F7), std::make_pair("F8", VC_F8),
+		std::make_pair("F9", VC_F9), std::make_pair("F10", VC_F10), std::make_pair("F11", VC_F11), std::make_pair("F12", VC_F12),
+		std::make_pair("F13", VC_F13), std::make_pair("F14", VC_F14), std::make_pair("F15", VC_F15), std::make_pair("F16", VC_F16),
+		std::make_pair("F17", VC_F17), std::make_pair("F18", VC_F18), std::make_pair("F19", VC_F19), std::make_pair("F20", VC_F20),
+		std::make_pair("F21", VC_F21), std::make_pair("F22", VC_F22), std::make_pair("F23", VC_F23), std::make_pair("F24", VC_F24),
+		std::make_pair("Numpad1", VC_KP_1), std::make_pair("Numpad2", VC_KP_2), std::make_pair("Numpad3", VC_KP_3), std::make_pair("Numpad4", VC_KP_4),
+		std::make_pair("Numpad5", VC_KP_5), std::make_pair("Numpad6", VC_KP_6), std::make_pair("Numpad7", VC_KP_7), std::make_pair("Numpad8", VC_KP_8),
+		std::make_pair("Numpad9", VC_KP_9), std::make_pair("Numpad0", VC_KP_0), std::make_pair("Digit1", VC_1), std::make_pair("Digit2", VC_2),
+		std::make_pair("Digit3", VC_3), std::make_pair("Digit4", VC_4), std::make_pair("Digit5", VC_5), std::make_pair("Digit6", VC_6),
+		std::make_pair("Digit7", VC_7), std::make_pair("Digit8", VC_8), std::make_pair("Digit9", VC_9), std::make_pair("Digit0", VC_0),
+		std::make_pair("Backspace", VC_BACKSPACE), std::make_pair("Tab", VC_TAB), std::make_pair("KeyA", VC_A), std::make_pair("KeyB", VC_B),
+		std::make_pair("KeyC", VC_C), std::make_pair("KeyD", VC_D), std::make_pair("KeyE", VC_E), std::make_pair("KeyF", VC_F),
+		std::make_pair("KeyG", VC_G), std::make_pair("KeyH", VC_H), std::make_pair("KeyI", VC_I), std::make_pair("KeyJ", VC_J),
+		std::make_pair("KeyK", VC_K), std::make_pair("KeyL", VC_L), std::make_pair("KeyM", VC_M), std::make_pair("KeyN", VC_N),
+		std::make_pair("KeyO", VC_O), std::make_pair("KeyP", VC_P), std::make_pair("KeyQ", VC_Q), std::make_pair("KeyR", VC_R),
+		std::make_pair("KeyS", VC_S), std::make_pair("KeyT", VC_T), std::make_pair("KeyU", VC_U), std::make_pair("KeyV", VC_V),
+		std::make_pair("KeyW", VC_W), std::make_pair("KeyX", VC_X), std::make_pair("KeyY", VC_Y), std::make_pair("KeyZ", VC_Z),
+		std::make_pair("Control", MASK_CTRL), std::make_pair("CommandOrControl", MASK_META), std::make_pair("Command", MASK_META),
+		std::make_pair("Alt", MASK_ALT), std::make_pair("Shift", MASK_SHIFT),
 
 		// Keyboard
-		std::make_pair("Backspace", VC_BACKSPACE),
-		std::make_pair("Tab", VC_TAB),
-		std::make_pair("Clear", VC_CLEAR),
-		std::make_pair("Enter", VC_ENTER),
+		std::make_pair("Backspace", VC_BACKSPACE), std::make_pair("Tab", VC_TAB), std::make_pair("Clear", VC_CLEAR), std::make_pair("Enter", VC_ENTER),
 		std::make_pair("Menu", VC_CONTEXT_MENU),
 		// std::make_pair("LeftMenu", VK_LMENU), std::make_pair("RightMenu", VK_RMENU),
 		// std::make_pair("OSLeft", VK_LWIN), std::make_pair("OSRight", VK_RWIN),
 		std::make_pair("Pause", VC_PAUSE),
 		// std::make_pair("Capital", VK_CAPITAL),
-		std::make_pair("CapsLock", VC_CAPS_LOCK),
-		std::make_pair("NumLock", VC_NUM_LOCK),
-		std::make_pair("ScrollLock", VC_SCROLL_LOCK),
-		std::make_pair("Escape", VC_ESCAPE),
-		std::make_pair("Space", VC_SPACE),
-		std::make_pair("PageUp", VC_KP_PAGE_UP), std::make_pair("PageDown", VC_KP_PAGE_DOWN),
-		std::make_pair("Home", VC_KP_HOME), std::make_pair("End", VC_KP_END),
-		std::make_pair("Left", VC_KP_LEFT), std::make_pair("Right", VC_KP_RIGHT),
-		std::make_pair("Up", VC_KP_UP), std::make_pair("Down", VC_KP_DOWN),
+		std::make_pair("CapsLock", VC_CAPS_LOCK), std::make_pair("NumLock", VC_NUM_LOCK), std::make_pair("ScrollLock", VC_SCROLL_LOCK),
+		std::make_pair("Escape", VC_ESCAPE), std::make_pair("Space", VC_SPACE), std::make_pair("PageUp", VC_KP_PAGE_UP),
+		std::make_pair("PageDown", VC_KP_PAGE_DOWN), std::make_pair("Home", VC_KP_HOME), std::make_pair("End", VC_KP_END),
+		std::make_pair("Left", VC_KP_LEFT), std::make_pair("Right", VC_KP_RIGHT), std::make_pair("Up", VC_KP_UP), std::make_pair("Down", VC_KP_DOWN),
 		// std::make_pair("Select", VK_SELECT),
 		// std::make_pair("Print", VK_PRINT),
 		// std::make_pair("Execute", VK_EXECUTE),
 		// std::make_pair("Snapshot", VK_SNAPSHOT),
-		std::make_pair("PrintScreen", VC_PRINTSCREEN),
-		std::make_pair("Insert", VC_SUN_INSERT), std::make_pair("Delete", VC_DELETE),
+		std::make_pair("PrintScreen", VC_PRINTSCREEN), std::make_pair("Insert", VC_SUN_INSERT), std::make_pair("Delete", VC_DELETE),
 		std::make_pair("Help", VC_SUN_HELP),
 		// std::make_pair("Apps", VK_APPS),
 		std::make_pair("Sleep", VC_SLEEP),
 
 		/// OEM Keys
-		std::make_pair("Semicolon", VC_SEMICOLON), std::make_pair("Equal", VC_EQUALS),
-		std::make_pair("Comma", VC_COMMA), std::make_pair("Minus", VC_MINUS),
-		std::make_pair("Period", VC_PERIOD), std::make_pair("Slash", VC_SLASH),
-		std::make_pair("Backquote", VC_BACKQUOTE), std::make_pair("BracketLeft", VC_OPEN_BRACKET),
-		std::make_pair("Backslash", VC_BACK_SLASH), std::make_pair("BracketRight", VC_CLOSE_BRACKET),
-		std::make_pair("Quote", VC_QUOTE),
+		std::make_pair("Semicolon", VC_SEMICOLON), std::make_pair("Equal", VC_EQUALS), std::make_pair("Comma", VC_COMMA),
+		std::make_pair("Minus", VC_MINUS), std::make_pair("Period", VC_PERIOD), std::make_pair("Slash", VC_SLASH),
+		std::make_pair("Backquote", VC_BACKQUOTE), std::make_pair("BracketLeft", VC_OPEN_BRACKET), std::make_pair("Backslash", VC_BACK_SLASH),
+		std::make_pair("BracketRight", VC_CLOSE_BRACKET), std::make_pair("Quote", VC_QUOTE),
 		// Arrows
-		std::make_pair("ArrowUp", VC_UP), std::make_pair("ArrowLeft", VC_LEFT),
-		std::make_pair("ArrowRight", VC_RIGHT), std::make_pair("ArrowDown", VC_DOWN),
+		std::make_pair("ArrowUp", VC_UP), std::make_pair("ArrowLeft", VC_LEFT), std::make_pair("ArrowRight", VC_RIGHT),
+		std::make_pair("ArrowDown", VC_DOWN),
 
 		/// Media
 		std::make_pair("MediaPlayPause", VC_MEDIA_PLAY), std::make_pair("MediaTrackPrevious", VC_MEDIA_PREVIOUS),
-		std::make_pair("MediaTrackNext", VC_MEDIA_NEXT), std::make_pair("MediaStop", VC_MEDIA_STOP)
-	};
+		std::make_pair("MediaTrackNext", VC_MEDIA_NEXT), std::make_pair("MediaStop", VC_MEDIA_STOP)};
 
 	g_modifiers = {
-		std::make_pair(VC_SHIFT_L, EVENT_KEY_RELEASED),
-		std::make_pair(VC_SHIFT_R, EVENT_KEY_RELEASED),
-		std::make_pair(VC_CONTROL_L, EVENT_KEY_RELEASED),
-		std::make_pair(VC_CONTROL_R, EVENT_KEY_RELEASED),
-		std::make_pair(VC_ALT_L, EVENT_KEY_RELEASED),
-		std::make_pair(VC_ALT_R, EVENT_KEY_RELEASED),
-		std::make_pair(VC_META_L, EVENT_KEY_RELEASED),
-		std::make_pair(VC_META_R, EVENT_KEY_RELEASED),
+		std::make_pair(VC_SHIFT_L, EVENT_KEY_RELEASED),   std::make_pair(VC_SHIFT_R, EVENT_KEY_RELEASED),
+		std::make_pair(VC_CONTROL_L, EVENT_KEY_RELEASED), std::make_pair(VC_CONTROL_R, EVENT_KEY_RELEASED),
+		std::make_pair(VC_ALT_L, EVENT_KEY_RELEASED),     std::make_pair(VC_ALT_R, EVENT_KEY_RELEASED),
+		std::make_pair(VC_META_L, EVENT_KEY_RELEASED),    std::make_pair(VC_META_R, EVENT_KEY_RELEASED),
 	};
 }
 
-void dispatch_procB(uiohook_event * const event) {
-	auto callback = []( Napi::Env env, Napi::Function jsCallback ) {
-		jsCallback.Call( {} );
-	};
+void dispatch_procB(uiohook_event *const event)
+{
+	auto callback = [](Napi::Env env, Napi::Function jsCallback) { jsCallback.Call({}); };
 	switch (event->type) {
-		case EVENT_HOOK_ENABLED:
-			// Lock the running mutex so we know if the hook is enabled.
-			pthread_mutex_lock(&hook_running_mutex);
+	case EVENT_HOOK_ENABLED:
+		// Lock the running mutex so we know if the hook is enabled.
+		pthread_mutex_lock(&hook_running_mutex);
 
-			// Unlock the control mutex so hook_enable() can continue.
-			pthread_cond_signal(&hook_control_cond);
-			pthread_mutex_unlock(&hook_control_mutex);
-			break;
+		// Unlock the control mutex so hook_enable() can continue.
+		pthread_cond_signal(&hook_control_cond);
+		pthread_mutex_unlock(&hook_control_mutex);
+		break;
 
-		case EVENT_HOOK_DISABLED:
-			// Lock the control mutex until we exit.
-			pthread_mutex_lock(&hook_control_mutex);
+	case EVENT_HOOK_DISABLED:
+		// Lock the control mutex until we exit.
+		pthread_mutex_lock(&hook_control_mutex);
 
-			// Unlock the running mutex so we know if the hook is disabled.
-			#ifdef __MACH__
-			// Stop the main runloop so that this program ends.
-			CFRunLoopStop(CFRunLoopGetMain());
-			#endif
+// Unlock the running mutex so we know if the hook is disabled.
+#ifdef __MACH__
+		// Stop the main runloop so that this program ends.
+		CFRunLoopStop(CFRunLoopGetMain());
+#endif
 
-			pthread_mutex_unlock(&hook_running_mutex);
-			break;
+		pthread_mutex_unlock(&hook_running_mutex);
+		break;
 
-		case EVENT_KEY_PRESSED: {
-			pthread_mutex_lock(&pressed_keys_mutex);
-			// std::cout << "key code " << event->data.keyboard.keycode << std::endl;
-			for (int i = 0; i < pressedKeyEventCallbacks.size(); i++) {
-				if (//If the associated event is an EVENT_KEY_PRESSED type
-					pressedKeyEventCallbacks.at(i)->m_event == EVENT_KEY_PRESSED &&
-					//If the current key pressed is associated with an element in the vector
-					event->data.keyboard.keycode == pressedKeyEventCallbacks.at(i)->m_codeEvent.key &&
-					//If the key is not already pressed
-					pressedKeyEventCallbacks.at(i)->m_currentState != EVENT_KEY_PRESSED) {
-					bool hasModifiers = !pressedKeyEventCallbacks.at(i)->m_codeEvent.modifiers.empty();
-					bool modifiersPressed = false;
+	case EVENT_KEY_PRESSED: {
+		pthread_mutex_lock(&pressed_keys_mutex);
+		// std::cout << "key code " << event->data.keyboard.keycode << std::endl;
+		for (int i = 0; i < pressedKeyEventCallbacks.size(); i++) {
+			if ( //If the associated event is an EVENT_KEY_PRESSED type
+				pressedKeyEventCallbacks.at(i)->m_event == EVENT_KEY_PRESSED &&
+				//If the current key pressed is associated with an element in the vector
+				event->data.keyboard.keycode == pressedKeyEventCallbacks.at(i)->m_codeEvent.key &&
+				//If the key is not already pressed
+				pressedKeyEventCallbacks.at(i)->m_currentState != EVENT_KEY_PRESSED) {
+				bool hasModifiers = !pressedKeyEventCallbacks.at(i)->m_codeEvent.modifiers.empty();
+				bool modifiersPressed = false;
 
-					for (auto modifier: pressedKeyEventCallbacks.at(i)->m_codeEvent.modifiers) {
-						auto mod_it = g_modifiers.find(modifier.first);
-						if (mod_it != g_modifiers.end() &&
-							mod_it->second != EVENT_KEY_PRESSED) {
-							modifiersPressed = false;
-							break;
-						}
-						modifiersPressed = true;
-					}
-
-					if (hasModifiers == modifiersPressed) {
-						if (pressedKeyEventCallbacks.at(i)->js_thread)
-							pressedKeyEventCallbacks.at(i)->js_thread.BlockingCall();
-
-						pressedKeyEventCallbacks.at(i)->m_currentState = EVENT_KEY_PRESSED;
+				for (auto modifier : pressedKeyEventCallbacks.at(i)->m_codeEvent.modifiers) {
+					auto mod_it = g_modifiers.find(modifier.first);
+					if (mod_it != g_modifiers.end() && mod_it->second != EVENT_KEY_PRESSED) {
+						modifiersPressed = false;
 						break;
 					}
+					modifiersPressed = true;
 				}
-			}
 
-			auto mod_it = g_modifiers.find(event->data.keyboard.keycode);
-			if (mod_it != g_modifiers.end())
-				updateModifierState(event->data.keyboard.keycode, EVENT_KEY_PRESSED);
+				if (hasModifiers == modifiersPressed) {
+					if (pressedKeyEventCallbacks.at(i)->js_thread)
+						pressedKeyEventCallbacks.at(i)->js_thread.BlockingCall();
 
-			pthread_mutex_unlock(&pressed_keys_mutex);
-			break;
-		}
-		case EVENT_KEY_RELEASED: {
-			pthread_mutex_lock(&released_keys_mutex);
-			for (int i = 0; i < releasedKeyEventCallbacks.size(); i++) {
-				if (//If the associated event is an EVENT_KEY_RELEASED type
-					releasedKeyEventCallbacks.at(i)->m_event == EVENT_KEY_RELEASED &&
-					//If the current key pressed is associated with an element in the vector
-					event->data.keyboard.keycode == releasedKeyEventCallbacks.at(i)->m_codeEvent.key) {
-						if (releasedKeyEventCallbacks.at(i)->js_thread)
-							releasedKeyEventCallbacks.at(i)->js_thread.BlockingCall();
-						break;
-				}
-			}
-
-			for (int i = 0; i < pressedKeyEventCallbacks.size(); i++) {
-				if (//If the associated event is an EVENT_KEY_PRESSED type
-					pressedKeyEventCallbacks.at(i)->m_event == EVENT_KEY_PRESSED &&
-					//If the key is already pressed
-					pressedKeyEventCallbacks.at(i)->m_currentState == EVENT_KEY_PRESSED) {
-					pressedKeyEventCallbacks.at(i)->m_currentState = EVENT_KEY_RELEASED;
+					pressedKeyEventCallbacks.at(i)->m_currentState = EVENT_KEY_PRESSED;
 					break;
 				}
 			}
-
-			auto mod_it = g_modifiers.find(event->data.keyboard.keycode);
-			if (mod_it != g_modifiers.end())
-				updateModifierState(event->data.keyboard.keycode, EVENT_KEY_RELEASED);
-
-			pthread_mutex_unlock(&released_keys_mutex);
-			break;
 		}
-		case EVENT_KEY_TYPED:
-		case EVENT_MOUSE_PRESSED:
-		case EVENT_MOUSE_RELEASED:
-		case EVENT_MOUSE_CLICKED:
-		case EVENT_MOUSE_MOVED:
-		case EVENT_MOUSE_DRAGGED:
-		case EVENT_MOUSE_WHEEL:
-		default:
-			break;
+
+		auto mod_it = g_modifiers.find(event->data.keyboard.keycode);
+		if (mod_it != g_modifiers.end())
+			updateModifierState(event->data.keyboard.keycode, EVENT_KEY_PRESSED);
+
+		pthread_mutex_unlock(&pressed_keys_mutex);
+		break;
+	}
+	case EVENT_KEY_RELEASED: {
+		pthread_mutex_lock(&released_keys_mutex);
+		for (int i = 0; i < releasedKeyEventCallbacks.size(); i++) {
+			if ( //If the associated event is an EVENT_KEY_RELEASED type
+				releasedKeyEventCallbacks.at(i)->m_event == EVENT_KEY_RELEASED &&
+				//If the current key pressed is associated with an element in the vector
+				event->data.keyboard.keycode == releasedKeyEventCallbacks.at(i)->m_codeEvent.key) {
+				if (releasedKeyEventCallbacks.at(i)->js_thread)
+					releasedKeyEventCallbacks.at(i)->js_thread.BlockingCall();
+				break;
+			}
+		}
+
+		for (int i = 0; i < pressedKeyEventCallbacks.size(); i++) {
+			if ( //If the associated event is an EVENT_KEY_PRESSED type
+				pressedKeyEventCallbacks.at(i)->m_event == EVENT_KEY_PRESSED &&
+				//If the key is already pressed
+				pressedKeyEventCallbacks.at(i)->m_currentState == EVENT_KEY_PRESSED) {
+				pressedKeyEventCallbacks.at(i)->m_currentState = EVENT_KEY_RELEASED;
+				break;
+			}
+		}
+
+		auto mod_it = g_modifiers.find(event->data.keyboard.keycode);
+		if (mod_it != g_modifiers.end())
+			updateModifierState(event->data.keyboard.keycode, EVENT_KEY_RELEASED);
+
+		pthread_mutex_unlock(&released_keys_mutex);
+		break;
+	}
+	case EVENT_KEY_TYPED:
+	case EVENT_MOUSE_PRESSED:
+	case EVENT_MOUSE_RELEASED:
+	case EVENT_MOUSE_CLICKED:
+	case EVENT_MOUSE_MOVED:
+	case EVENT_MOUSE_DRAGGED:
+	case EVENT_MOUSE_WHEEL:
+	default:
+		break;
 	}
 }
 
-void *hook_thread_proc(void *arg) {
+void *hook_thread_proc(void *arg)
+{
 	// Set the hook status.
 	int status = hook_run();
 	if (status != UIOHOOK_SUCCESS)
@@ -358,7 +285,8 @@ void *hook_thread_proc(void *arg) {
 	return arg;
 }
 
-void hook_enable() {
+void hook_enable()
+{
 	// Lock the thread control mutex.  This will be unlocked when the
 	// thread has finished starting, or when it has fully stopped.
 	pthread_mutex_lock(&hook_control_mutex);
@@ -375,29 +303,28 @@ void hook_enable() {
 	pthread_attr_getschedpolicy(&hook_thread_attr, &policy);
 	int priority = sched_get_priority_max(policy);
 
-	int *hook_thread_status = (int*)malloc(sizeof(int));
+	int *hook_thread_status = (int *)malloc(sizeof(int));
 	if (pthread_create(&hook_thread, &hook_thread_attr, hook_thread_proc, hook_thread_status) == 0) {
-		#if defined(__MACH__) || _POSIX_C_SOURCE >= 200112L
-		// Some POSIX revisions do not support pthread_setschedprio so we will 
+#if defined(__MACH__) || _POSIX_C_SOURCE >= 200112L
+		// Some POSIX revisions do not support pthread_setschedprio so we will
 		// use pthread_setschedparam instead.
-		struct sched_param param = { .sched_priority = priority };
+		struct sched_param param = {.sched_priority = priority};
 		if (pthread_setschedparam(hook_thread, SCHED_OTHER, &param) != 0) {
 		}
-		#else
+#else
 		// Raise the thread priority using glibc pthread_setschedprio.
 		if (pthread_setschedprio(hook_thread, priority) != 0) {
 		}
-		#endif
+#endif
 
-
-		// Wait for the thread to indicate that it has passed the 
-		// initialization portion by blocking until either a EVENT_HOOK_ENABLED 
+		// Wait for the thread to indicate that it has passed the
+		// initialization portion by blocking until either a EVENT_HOOK_ENABLED
 		// event is received or the thread terminates.
 		// NOTE This unlocks the hook_control_mutex while we wait.
 		pthread_cond_wait(&hook_control_cond, &hook_control_mutex);
 
 		if (pthread_mutex_trylock(&hook_running_mutex) == 0) {
-			// Lock Successful; The hook is not running but the hook_control_cond 
+			// Lock Successful; The hook is not running but the hook_control_cond
 			// was signaled!  This indicates that there was a startup problem!
 
 			// Get the status back from the thread.
@@ -405,28 +332,30 @@ void hook_enable() {
 			hook_status = *hook_thread_status;
 		} else {
 			// Lock Failure; The hook is currently running and wait was signaled
-			// indicating that we have passed all possible start checks.  We can 
+			// indicating that we have passed all possible start checks.  We can
 			// always assume a successful startup at this point.
 			hook_status = UIOHOOK_SUCCESS;
 		}
 
 		free(hook_thread_status);
 
-		} else {
-			hook_status = UIOHOOK_ERROR_THREAD_CREATE;
-		}
+	} else {
+		hook_status = UIOHOOK_ERROR_THREAD_CREATE;
+	}
 
 	// Make sure the control mutex is unlocked.
 	pthread_mutex_unlock(&hook_control_mutex);
 }
 
-bool logger_proc(unsigned int level, const char *format, ...) {
+bool logger_proc(unsigned int level, const char *format, ...)
+{
 	bool status = false;
 
 	return status;
 }
 
-Napi::Value StartHotkeyThreadJS(const Napi::CallbackInfo& info) {
+Napi::Value StartHotkeyThreadJS(const Napi::CallbackInfo &info)
+{
 	storeStringKeyCodes();
 	// Lock the thread control mutex.  This will be unlocked when the
 	// thread has finished starting, or when it has fully stopped.
@@ -447,7 +376,8 @@ Napi::Value StartHotkeyThreadJS(const Napi::CallbackInfo& info) {
 	return info.Env().Undefined();
 }
 
-Napi::Value StopHotkeyThreadJS(const Napi::CallbackInfo& info) {
+Napi::Value StopHotkeyThreadJS(const Napi::CallbackInfo &info)
+{
 	if (!hook_status) {
 		hook_stop();
 		pthread_mutex_destroy(&hook_running_mutex);
@@ -458,7 +388,8 @@ Napi::Value StopHotkeyThreadJS(const Napi::CallbackInfo& info) {
 	return info.Env().Undefined();
 }
 
-Napi::Value RegisterHotkeyJS(const Napi::CallbackInfo& info) {
+Napi::Value RegisterHotkeyJS(const Napi::CallbackInfo &info)
+{
 	Action *action = new Action();
 
 	Napi::Object binds = info[0].ToObject();
@@ -472,30 +403,30 @@ Napi::Value RegisterHotkeyJS(const Napi::CallbackInfo& info) {
 	}
 
 	event.key = key_it->second;
-	
+
 	bool modShift, modCtrl, modAlt, modMeta;
 	Napi::Object modifiers = binds.Get("modifiers").ToObject();
 	modShift = modifiers.Get("shift").ToBoolean().Value();
 	modCtrl = modifiers.Get("ctrl").ToBoolean().Value();
 	modAlt = modifiers.Get("alt").ToBoolean().Value();
-	modMeta	= modifiers.Get("meta").ToBoolean().Value();
+	modMeta = modifiers.Get("meta").ToBoolean().Value();
 
-	if(modShift) {
+	if (modShift) {
 		event.modifiers.emplace(std::make_pair(VC_SHIFT_L, EVENT_KEY_RELEASED));
 		event.modifiers.emplace(std::make_pair(VC_SHIFT_R, EVENT_KEY_RELEASED));
 	}
 
-	if(modCtrl) {
+	if (modCtrl) {
 		event.modifiers.emplace(std::make_pair(VC_CONTROL_L, EVENT_KEY_RELEASED));
 		event.modifiers.emplace(std::make_pair(VC_CONTROL_R, EVENT_KEY_RELEASED));
 	}
 
-	if(modAlt) {
+	if (modAlt) {
 		event.modifiers.emplace(std::make_pair(VC_ALT_L, EVENT_KEY_RELEASED));
 		event.modifiers.emplace(std::make_pair(VC_ALT_R, EVENT_KEY_RELEASED));
 	}
 
-	if(modMeta) {
+	if (modMeta) {
 		event.modifiers.emplace(std::make_pair(VC_META_L, EVENT_KEY_RELEASED));
 		event.modifiers.emplace(std::make_pair(VC_META_R, EVENT_KEY_RELEASED));
 	}
@@ -506,13 +437,7 @@ Napi::Value RegisterHotkeyJS(const Napi::CallbackInfo& info) {
 
 	action->m_currentState = EVENT_KEY_RELEASED;
 	Napi::Function cb = binds.Get("callback").As<Napi::Function>();
-	action->js_thread = Napi::ThreadSafeFunction::New(
-		info.Env(),
-		cb,
-		"Hotkey: " + event.key,
-		0,
-		1,
-		[] ( Napi::Env ) {});
+	action->js_thread = Napi::ThreadSafeFunction::New(info.Env(), cb, "Hotkey: " + event.key, 0, 1, [](Napi::Env) {});
 
 	if (eventString.compare("registerKeydown") == 0) {
 		action->m_event = EVENT_KEY_PRESSED;
@@ -532,7 +457,8 @@ Napi::Value RegisterHotkeyJS(const Napi::CallbackInfo& info) {
 	return Napi::Boolean::New(info.Env(), true);
 }
 
-Napi::Value UnregisterHotkeyJS(const Napi::CallbackInfo& info) {
+Napi::Value UnregisterHotkeyJS(const Napi::CallbackInfo &info)
+{
 	pthread_mutex_lock(&pressed_keys_mutex);
 	pthread_mutex_lock(&released_keys_mutex);
 
@@ -548,39 +474,40 @@ Napi::Value UnregisterHotkeyJS(const Napi::CallbackInfo& info) {
 	event.key = key_it->second;
 	bool found_key = false;
 
-	auto removeKeyFromCb = [&found_key, &event](std::vector<Action*>& vec) mutable {
-        for (std::vector<Action*>::iterator act = vec.begin(); act != vec.end();) {
-             	if ((*act)->m_codeEvent.key == event.key) {
-          		found_key = true;
-                if ((*act)->js_thread)
-			(*act)->js_thread.Release();
-                act = vec.erase(act);
-            } else {
-		++act;
+	auto removeKeyFromCb = [&found_key, &event](std::vector<Action *> &vec) mutable {
+		for (std::vector<Action *>::iterator act = vec.begin(); act != vec.end();) {
+			if ((*act)->m_codeEvent.key == event.key) {
+				found_key = true;
+				if ((*act)->js_thread)
+					(*act)->js_thread.Release();
+				act = vec.erase(act);
+			} else {
+				++act;
+			}
 		}
-	}
 	};
 
 	removeKeyFromCb(pressedKeyEventCallbacks);
 	if (!found_key) {
-        	removeKeyFromCb(releasedKeyEventCallbacks);
-    	}
+		removeKeyFromCb(releasedKeyEventCallbacks);
+	}
 
 	pthread_mutex_unlock(&pressed_keys_mutex);
 	pthread_mutex_unlock(&released_keys_mutex);
 	return info.Env().Undefined();
 }
 
-Napi::Value UnregisterHotkeysJS(const Napi::CallbackInfo& info) {
+Napi::Value UnregisterHotkeysJS(const Napi::CallbackInfo &info)
+{
 	pthread_mutex_lock(&pressed_keys_mutex);
 	pthread_mutex_lock(&released_keys_mutex);
 
-	for (auto key: pressedKeyEventCallbacks) {
+	for (auto key : pressedKeyEventCallbacks) {
 		if (key->js_thread)
 			key->js_thread.Release();
 	}
 
-	for (auto key: releasedKeyEventCallbacks) {
+	for (auto key : releasedKeyEventCallbacks) {
 		if (key->js_thread)
 			key->js_thread.Release();
 	}

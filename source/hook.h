@@ -20,8 +20,8 @@
 #include <napi.h>
 #include <iostream>
 
-Napi::Value StartHotkeyThreadJS(const Napi::CallbackInfo& info);
-Napi::Value StopHotkeyThreadJS(const Napi::CallbackInfo& info);
-Napi::Value RegisterHotkeyJS(const Napi::CallbackInfo& info);
-Napi::Value UnregisterHotkeyJS(const Napi::CallbackInfo& info);
-Napi::Value UnregisterHotkeysJS(const Napi::CallbackInfo& info);
+Napi::Value StartHotkeyThreadJS(const Napi::CallbackInfo &info);
+Napi::Value StopHotkeyThreadJS(const Napi::CallbackInfo &info);
+Napi::Value RegisterHotkeyJS(const Napi::CallbackInfo &info);
+Napi::Value UnregisterHotkeyJS(const Napi::CallbackInfo &info);
+Napi::Value UnregisterHotkeysJS(const Napi::CallbackInfo &info);
