@@ -8,8 +8,8 @@ then
 fi
 
 # Download libuiohook dependency
-export DEPS="libuiohook-osx-1.2-${ARCHITECTURE}-sl.0"
-wget --quiet --retry-connrefused --waitretry=1 https://obs-studio-deployment.s3-us-west-2.amazonaws.com/libuiohook-osx-1.2-${ARCHITECTURE}-sl.0.tar.gz
+export DEPS="libuiohook-osx-1.2.2-b230208-${ARCHITECTURE}"
+wget --quiet --retry-connrefused --waitretry=1 https://obs-studio-deployment.s3-us-west-2.amazonaws.com/libuiohook-osx-1.2.2-b230208-${ARCHITECTURE}.tar.gz
 
 mkdir build
 cd build
