@@ -2,9 +2,14 @@ set -e
 
 brew install wget
 
+if [ ! -n "${ARCHITECTURE}" ]
+then
+    ARCHITECTURE=$(uname -m)
+fi
+
 # Download libuiohook dependency
-export DEPS="libuiohook-osx-1.2-sl.0"
-wget --quiet --retry-connrefused --waitretry=1 https://obs-studio-deployment.s3-us-west-2.amazonaws.com/libuiohook-osx-1.2-sl.0.tar.gz
+export DEPS="libuiohook-osx-1.2.2-b230208-${ARCHITECTURE}"
+wget --quiet --retry-connrefused --waitretry=1 https://obs-studio-deployment.s3-us-west-2.amazonaws.com/libuiohook-osx-1.2.2-b230208-${ARCHITECTURE}.tar.gz
 
 mkdir build
 cd build
@@ -12,12 +17,20 @@ cd build
 mkdir deps
 tar -xf ../${DEPS}.tar.gz -C ./deps
 
+if [ -n "${ELECTRON_VERSION}" ]
+then
+    NODEJS_VERSION_PARAM="-DNODEJS_VERSION=${ELECTRON_VERSION}"
+else
+    NODEJS_VERSION_PARAM=""
+fi
+
 # Configure
 cmake .. \
--DCMAKE_OSX_DEPLOYMENT_TARGET=10.11 \
+-DCMAKE_OSX_DEPLOYMENT_TARGET=10.15 \
 -DUIOHOOKDIR=${PWD}/deps/${DEPS} \
 -DCMAKE_BUILD_TYPE=RelWithDebInfo \
--DNODEJS_VERSION=${ELECTRON_VERSION} \
+${NODEJS_VERSION_PARAM} \
+-DCMAKE_OSX_ARCHITECTURES=${ARCHITECTURE} \
 -DCMAKE_INSTALL_PREFIX=${DISTRIBUTE_DIRECTORY}/node-libuiohook
 
 cd ..
