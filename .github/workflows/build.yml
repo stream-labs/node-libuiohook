@@ -19,7 +19,7 @@ env:
   BUILD_DIRECTORY: "build"
   DISTRIBUTE_DIRECTORY: "distribute"
   RELEASE_BUCKET: "slobs-node-libuiohook"
-  ELECTRON_VERSION: "v17.4.11"
+  ELECTRON_VERSION: "v25.8.0"
 
 permissions:
   contents: read
